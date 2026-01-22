@@ -1,0 +1,19 @@
+const express = require('express');
+const prisma = require('./config/prisma');
+const pacientesRoutes = require('./routes/pacientes.routes');
+
+const app = express();
+
+app.use(express.json());
+app.use('/pacientes', pacientesRoutes);
+
+app.get('/api/v1/health', async (req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ status: 'ok', db: 'connected' });
+  } catch (error) {
+    res.status(500).json({ status: 'error', db: 'disconnected' });
+  }
+});
+
+module.exports = app;
