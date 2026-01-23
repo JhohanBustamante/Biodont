@@ -1,11 +1,13 @@
 const express = require('express');
 const prisma = require('./config/prisma');
 const pacientesRoutes = require('./routes/pacientes.routes');
+const citasRoutes = require('./routes/citas.routes');
 
 const app = express();
 
 app.use(express.json());
 app.use('/pacientes', pacientesRoutes);
+app.use('/citas', citasRoutes)
 
 app.get('/api/v1/health', async (req, res) => {
   try {
