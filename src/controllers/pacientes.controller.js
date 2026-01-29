@@ -4,14 +4,12 @@ const pacientesController = {};
 
 pacientesController.crear = async (req, res) => {
   try {
-    const paciente = await citasService.crear(req.body);
+    const paciente = await pacientesService.crear(req.body);
     res.status(201).json(paciente);
   } catch (error) {
     console.error(error);
-
     if (error.isOperational)
       return res.status(error.statusCode).json({ message: error.message });
-
     res.status(500).json({
       message: "Error interno del servidor",
     });
@@ -20,7 +18,7 @@ pacientesController.crear = async (req, res) => {
 
 pacientesController.verTodos = async (req, res) => {
   try {
-    const pacientes = await pacientesService.verTodos();
+    const pacientes = await pacientesService.verTodos(req.query);
     res.status(200).json(pacientes);
   } catch (error) {
     console.log(error);
@@ -100,6 +98,23 @@ pacientesController.verPorDocumento = async (req, res) => {
     res
       .status(500)
       .json({ message: "Error interno en el servidor al ver el paciente." });
+  }
+};
+
+pacientesController.actualizar = async (req, res) => {
+  try {
+    const id = Number(req.params.id.trim());
+    const paciente = await pacientesService.actualizar({ id, body: req.body });
+    res.status(200).json(paciente);
+  } catch (error) {
+    console.log(error);
+
+    if (error.isOperational)
+      return res.status(error.statusCode).json({ message: error.message });
+
+    res
+      .status(500)
+      .json({ message: "Error interno en el servidor al actualizar datos del paciente." });
   }
 };
 

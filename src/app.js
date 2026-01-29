@@ -2,9 +2,12 @@ const express = require('express');
 const prisma = require('./config/prisma');
 const pacientesRoutes = require('./routes/pacientes.routes');
 const citasRoutes = require('./routes/citas.routes');
-
+const cors = require('cors');
 const app = express();
+const morgan = require('morgan');
 
+app.use(morgan('dev'));
+app.use(cors());
 app.use(express.json());
 app.use('/pacientes', pacientesRoutes);
 app.use('/citas', citasRoutes)

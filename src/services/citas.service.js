@@ -40,7 +40,7 @@ citasService.verPorPacienteYEstado = async ({ pacienteId, estado }) => {
 };
 
 citasService.actualizarEstado = async ({ id, estado }) => {
-  if ((!id || !estado))
+  if (!id || !estado)
     throw new BadRequestError("Id del paciente o estado no enviados.");
   if (!ESTADOS_VALIDOS.includes(estado))
     throw new BadRequestError(
