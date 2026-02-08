@@ -26,7 +26,7 @@ pacientesService.crear = async ({
   nombre = nombre.toLowerCase().trim();
   apellido = apellido.toLowerCase().trim();
   documento = documento.trim();
-  telefono = telefono.trim();
+  telefono = telefono;
 
   if (
     await prisma.paciente.findUnique({

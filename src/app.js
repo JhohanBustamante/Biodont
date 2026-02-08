@@ -7,7 +7,7 @@ const app = express();
 const morgan = require('morgan');
 
 app.use(morgan('dev'));
-app.use(cors());
+app.use(cors("http://localhost:000"));
 app.use(express.json());
 app.use('/pacientes', pacientesRoutes);
 app.use('/citas', citasRoutes)
