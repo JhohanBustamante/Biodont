@@ -7,7 +7,7 @@ const app = express();
 const morgan = require('morgan');
 
 app.use(morgan('dev'));
-app.use(cors("http://localhost:000"));
+app.use(cors());
 app.use(express.json());
 app.use('/pacientes', pacientesRoutes);
 app.use('/citas', citasRoutes)
@@ -21,4 +21,4 @@ app.get('/api/v1/health', async (req, res) => {
   }
 });
 
-module.exports = app;
+module.exports = app; 
