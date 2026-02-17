@@ -1,4 +1,5 @@
 const citasService = require("../services/citas.service");
+const pacientesController = require("./pacientes.controller");
 const citasController = {};
 
 citasController.crear = async (req, res) => {
@@ -39,6 +40,23 @@ citasController.verCita = async (req, res) => {
       .json({ message: "Error interno en el servidor al crear la cita." });
   }
 };
+
+citasController.verTodos = async (req, res) => {
+  try {
+    const citas = await citasService.verTodos(req.query)
+    res.status(200).json(citas);
+  } catch (error) {
+    console.log(error);
+
+    if (error.isOperational)
+      return res.status(error.statusCode).json({ message: error.message });
+
+    res
+      .status(500)
+      .json({ message: "Error interno en el servidor al ver la cita." });
+
+  }
+}
 
 citasController.actualizarCita = async (req, res) => {
   try {

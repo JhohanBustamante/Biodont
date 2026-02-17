@@ -17,6 +17,7 @@ model Paciente {
   activo        Boolean  @default(true)
 
   citas         Cita[]
+  finanzas      Finanza[]
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -34,6 +35,32 @@ model Cita {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Finanza {
+  id          Int           @id @default(autoincrement())
+  fecha       DateTime
+  monto       Decimal
+  tipo        TipoFinanza
+  estado      EstadoFinanza
+  nota        String?
+
+  pacienteId  Int?
+  paciente    Paciente?     @relation(fields: [pacienteId], references: [id])
+
+  createdAt   DateTime      @default(now())
+}
+
+
+enum TipoFinanza {
+  INGRESO
+  EGRESO
+}
+
+enum EstadoFinanza {
+  PENDIENTE
+  PAGADA
+  ATRASADA
 }
 
 enum EstadoCita {

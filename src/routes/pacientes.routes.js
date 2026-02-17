@@ -17,5 +17,4 @@ router.get("/documento/:documento", pacientesController.verPorDocumento)
 
 router.put("/actualizar/:id", pacientesController.actualizar)
 
-
 module.exports = router;

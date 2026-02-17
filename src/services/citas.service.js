@@ -53,4 +53,19 @@ citasService.actualizarEstado = async ({ id, estado }) => {
   });
 };
 
+citasService.verTodos = async (queries) => {
+  const motivo = queries.motivo?.trim();
+  const observaciones = queries.observaciones?.trim();
+  const estado = queries.estado?.trim();
+  const where = {};
+  if (motivo) where.motivo = { contains: motivo.toLowerCase() };
+  if (observaciones) where.observaciones = { contains: observaciones.toLowerCase() };
+  if (estado) where.estado =  estado.toUpperCase();
+
+  return await prisma.cita.findMany({
+    where,
+    orderBy: { estado:"asc" }
+  });
+};
+
 module.exports = citasService;
