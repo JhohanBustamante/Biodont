@@ -1,5 +1,4 @@
 const express = require("express");
-const prisma = require("../config/prisma");
 const router = express.Router();
 const pacientesController = require("../controllers/pacientes.controller")
 
