@@ -7,94 +7,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Odontograma {
-  id          Int       @id @default(autoincrement())
-  pacienteId  Int
-  fecha       DateTime  @default(now())
-  version     Int       @default(1)
-  activo      Boolean   @default(true)
-  paciente    Paciente  @relation(fields: [pacienteId], references: [id])
-  dientes     Diente[]
-}
-
-model Diente {
-  id             Int        @id @default(autoincrement())
-  numero         Int
-  odontogramaId  Int
-
-  odontograma    Odontograma @relation(fields: [odontogramaId], references: [id])
-  superficies    DiagnosticoSuperficie[]
-}
-
-model DiagnosticoSuperficie {
-  id         Int     @id @default(autoincrement())
-  superficie String
-  diagnostico Json
-  dienteId   Int
-
-  diente     Diente  @relation(fields: [dienteId], references: [id])
-}
-
-model Paciente {
-  id         Int      @id @default(autoincrement())
-  nombre     String
-  apellido   String
-  documento  String   @unique
-  telefono   String?
-  notas      String?
-  activo     Boolean  @default(true)
-
-  citas        Cita[]
-  finanzas     Finanza[]
-  odontogramas Odontograma[]
-
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-}
-
-model Cita {
-  id            Int        @id @default(autoincrement())
-  fecha         DateTime
-  motivo        String
-  observaciones String?
-  estado        EstadoCita @default(PROGRAMADA)
-
-  pacienteId    Int
-  paciente      Paciente   @relation(fields: [pacienteId], references: [id])
-
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
-}
-
-model Finanza {
-  id         Int           @id @default(autoincrement())
-  fecha      DateTime      @default(now())
-  monto      Int           // Guardado en centavos
-  tipo       TipoFinanza
-  estado     EstadoFinanza @default(PENDIENTE)
-  nota       String?
-
-  pacienteId Int?
-  paciente   Paciente?     @relation(fields: [pacienteId], references: [id])
-
-  createdAt  DateTime      @default(now())
-}
-
-enum TipoFinanza {
-  INGRESO
-  EGRESO
-}
-
-enum EstadoFinanza {
-  PENDIENTE
-  PAGADA
-  ATRASADA
-}
+//////////////////////////////////////////////////////
+// ENUMS
+//////////////////////////////////////////////////////
 
 enum EstadoCita {
   PROGRAMADA
+  CONFIRMADA
   CANCELADA
   ATENDIDA
+}
+
+enum TipoMovimiento {
+  INGRESO
+  EGRESO
 }
 
 enum RolUsuario {
@@ -104,6 +30,39 @@ enum RolUsuario {
   RECEPCION
 }
 
+enum EstadoTratamiento {
+  ACTIVO
+  FINALIZADO
+  PAUSADO
+}
+
+//////////////////////////////////////////////////////
+// PACIENTES
+//////////////////////////////////////////////////////
+
+model Paciente {
+  id              Int       @id @default(autoincrement())
+  nombre          String
+  apellido        String
+  documento       String    @unique
+  telefono        String?
+  correo          String?
+  fechaNacimiento DateTime?
+  direccion       String?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  citas           Cita[]
+  tratamientos    Tratamiento[]
+  odontogramas    Odontograma[]
+  movimientos     Movimiento[]
+}
+
+//////////////////////////////////////////////////////
+// USUARIOS (PERSONAL CLINICA)
+//////////////////////////////////////////////////////
+
 model Usuario {
   id         Int        @id @default(autoincrement())
   nombre     String
@@ -111,9 +70,139 @@ model Usuario {
   correo     String     @unique
   password   String
   rol        RolUsuario
+
   telefono   String?
   documento  String?    @unique
+
   activo     Boolean    @default(true)
+
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
+
+  citas         Cita[]
+  tratamientos  Tratamiento[]
+}
+
+//////////////////////////////////////////////////////
+// CITAS
+//////////////////////////////////////////////////////
+
+model Cita {
+  id         Int        @id @default(autoincrement())
+
+  pacienteId Int
+  usuarioId  Int?
+
+  fecha      DateTime
+  motivo     String
+  estado     EstadoCita @default(PROGRAMADA)
+
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  paciente   Paciente   @relation(fields: [pacienteId], references: [id])
+  usuario    Usuario?   @relation(fields: [usuarioId], references: [id])
+
+  @@index([pacienteId])
+  @@index([usuarioId])
+}
+
+//////////////////////////////////////////////////////
+// TRATAMIENTOS
+//////////////////////////////////////////////////////
+
+model Tratamiento {
+  id          Int                @id @default(autoincrement())
+
+  pacienteId  Int
+  usuarioId   Int?
+
+  descripcion String
+  estado      EstadoTratamiento  @default(ACTIVO)
+
+  fechaInicio DateTime?
+  fechaFin    DateTime?
+
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  paciente    Paciente           @relation(fields: [pacienteId], references: [id])
+  usuario     Usuario?           @relation(fields: [usuarioId], references: [id])
+
+  @@index([pacienteId])
+}
+
+//////////////////////////////////////////////////////
+// FINANZAS
+//////////////////////////////////////////////////////
+
+model Movimiento {
+  id          Int             @id @default(autoincrement())
+
+  tipo        TipoMovimiento
+  concepto    String
+  monto       Float
+
+  fecha       DateTime
+  metodoPago  String?
+
+  pacienteId  Int?
+
+  createdAt   DateTime        @default(now())
+
+  paciente    Paciente?       @relation(fields: [pacienteId], references: [id])
+}
+
+//////////////////////////////////////////////////////
+// ODONTOGRAMA
+//////////////////////////////////////////////////////
+
+model Odontograma {
+  id          Int       @id @default(autoincrement())
+
+  pacienteId  Int
+  fecha       DateTime  @default(now())
+
+  version     Int       @default(1)
+  activo      Boolean   @default(true)
+
+  paciente    Paciente  @relation(fields: [pacienteId], references: [id])
+
+  dientes     Diente[]
+
+  @@index([pacienteId])
+}
+
+//////////////////////////////////////////////////////
+// DIENTES
+//////////////////////////////////////////////////////
+
+model Diente {
+  id             Int        @id @default(autoincrement())
+
+  numero         Int
+  odontogramaId  Int
+
+  odontograma    Odontograma @relation(fields: [odontogramaId], references: [id])
+
+  superficies    DiagnosticoSuperficie[]
+
+  @@index([odontogramaId])
+}
+
+//////////////////////////////////////////////////////
+// DIAGNOSTICO DE SUPERFICIES
+//////////////////////////////////////////////////////
+
+model DiagnosticoSuperficie {
+  id         Int     @id @default(autoincrement())
+
+  superficie String
+  diagnostico Json
+
+  dienteId   Int
+
+  diente     Diente  @relation(fields: [dienteId], references: [id])
+
+  @@index([dienteId])
 }
