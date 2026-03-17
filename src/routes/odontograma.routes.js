@@ -1,15 +1,15 @@
-const odontogramaController = require("../controllers/odontograma.controller")
-const express = require("express")
+const express = require("express");
+const odontogramaController = require("../controllers/odontograma.controller");
+
 const router = express.Router();
 
-router.get('', odontogramaController.verTodos)
+router.get("", odontogramaController.verTodos);
+router.post("", odontogramaController.crear);
 
-router.post('', odontogramaController.crear)
+router.get("/historial/:pacienteId", odontogramaController.verHistorial);
+router.get("/:pacienteId", odontogramaController.verPorUsuario);
 
-router.put('', odontogramaController.actualizar)
-
-router.delete('', odontogramaController.eliminar)
-
-router.get('', odontogramaController.verPorUsuario)
+router.put("/:id", odontogramaController.versionar);
+//router.delete("/:id", odontogramaController.eliminar);
 
 module.exports = router;
