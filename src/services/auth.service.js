@@ -1,103 +1,101 @@
-import bcrypt from 'bcrypt';
-import prisma from '../lib/prisma.js';
-import { generateToken } from '../utils/jwt.js';
+import bcrypt from "bcrypt";
+import prisma from "../lib/prisma.js";
+import { generateToken } from "../utils/jwt.js";
 
-const ROLES_PERMITIDOS_REGISTRO = ['ODONTOLOGO', 'AUXILIAR', 'RECEPCION'];
+const ROLES_PERMITIDOS_REGISTRO = ["ODONTOLOGO", "AUXILIAR", "RECEPCION"];
 
 export const registerUserService = async (data) => {
-  const {
-    nombre,
-    apellido,
-    correo,
-    password,
-    rol,
-    telefono,
-    documento
-  } = data;
+  try {
+    let { nombre, apellido, correo, password, rol, telefono, documento } = data;
 
-  if (!nombre || !apellido || !correo || !password || !rol) {
-    throw new Error('Todos los campos obligatorios deben ser completados');
-  }
+    if (!nombre || !apellido || !correo || !password || !rol) {
+      throw new Error("Todos los campos obligatorios deben ser completados");
+    }
+    console.log(data)
+    rol = rol.toUpperCase().trim();
 
-  if (!ROLES_PERMITIDOS_REGISTRO.includes(rol)) {
-    throw new Error('Rol no permitido para registro');
-  }
+    if (!ROLES_PERMITIDOS_REGISTRO.includes(rol)) {
+      throw new Error("Rol no permitido para registro");
+    }
 
-  const existingUserByEmail = await prisma.usuario.findUnique({
-    where: { correo }
-  });
-
-  if (existingUserByEmail) {
-    throw new Error('El correo ya está registrado');
-  }
-
-  if (documento) {
-    const existingUserByDocument = await prisma.usuario.findUnique({
-      where: { documento }
+    const existingUserByEmail = await prisma.usuario.findUnique({
+      where: { correo },
     });
 
-    if (existingUserByDocument) {
-      throw new Error('El documento ya está registrado');
+    if (existingUserByEmail) {
+      throw new Error("El correo ya está registrado");
     }
+
+    if (documento) {
+      const existingUserByDocument = await prisma.usuario.findUnique({
+        where: { documento },
+      });
+
+      if (existingUserByDocument) {
+        throw new Error("El documento ya está registrado");
+      }
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newUser = await prisma.usuario.create({
+      data: {
+        nombre,
+        apellido,
+        correo,
+        password: hashedPassword,
+        rol,
+        telefono,
+        documento,
+      },
+      select: {
+        id: true,
+        nombre: true,
+        apellido: true,
+        correo: true,
+        rol: true,
+        telefono: true,
+        documento: true,
+        activo: true,
+        createdAt: true,
+      },
+    });
+
+    return newUser;
+  } catch (error) {
+    console.log(error);
   }
-
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  const newUser = await prisma.usuario.create({
-    data: {
-      nombre,
-      apellido,
-      correo,
-      password: hashedPassword,
-      rol,
-      telefono,
-      documento
-    },
-    select: {
-      id: true,
-      nombre: true,
-      apellido: true,
-      correo: true,
-      rol: true,
-      telefono: true,
-      documento: true,
-      activo: true,
-      createdAt: true
-    }
-  });
-
-  return newUser;
 };
 
 export const loginUserService = async (correo, password) => {
   if (!correo || !password) {
-    throw new Error('Correo y contraseña son obligatorios');
-  }
+    throw new Error("Correo y contraseña son obligatorios");
+  } 
 
   const user = await prisma.usuario.findUnique({
-    where: { correo }
+    where: { correo },
   });
-
+  console.log(user)
   if (!user) {
-    throw new Error('Credenciales inválidas');
+    throw new Error("Credenciales inválidas");
   }
 
   if (!user.activo) {
-    throw new Error('Usuario inactivo. Contacta al administrador');
+    throw new Error("Usuario inactivo. Contacta al administrador");
   }
 
   const isPasswordValid = await bcrypt.compare(password, user.password);
 
   if (!isPasswordValid) {
-    throw new Error('Credenciales inválidas');
+    throw new Error("Credenciales inválidas");
   }
 
-  await prisma.usuario.update({
-    where: { id: user.id },
-    data: {
-      ultimoAcceso: new Date()
-    }
-  });
+  // await prisma.usuario.update({
+  //   where: { id: user.id },
+  //   data: {
+  //     ultimoAcceso: new Date(),
+  //   },
+  // });
 
   const token = generateToken(user);
 
@@ -111,8 +109,8 @@ export const loginUserService = async (correo, password) => {
       rol: user.rol,
       telefono: user.telefono,
       documento: user.documento,
-      activo: user.activo
-    }
+      activo: user.activo,
+    },
   };
 };
 
@@ -130,12 +128,12 @@ export const getProfileService = async (userId) => {
       activo: true,
       ultimoAcceso: true,
       createdAt: true,
-      updatedAt: true
-    }
+      updatedAt: true,
+    },
   });
 
   if (!user) {
-    throw new Error('Usuario no encontrado');
+    throw new Error("Usuario no encontrado");
   }
 
   return user;
@@ -153,27 +151,32 @@ export const listUsersService = async () => {
       documento: true,
       activo: true,
       ultimoAcceso: true,
-      createdAt: true
+      createdAt: true,
     },
     orderBy: {
-      createdAt: 'desc'
-    }
+      createdAt: "desc",
+    },
   });
 };
 
 export const updateUserRoleService = async (userId, nuevoRol) => {
-  const rolesPermitidosCambio = ['ADMIN', 'ODONTOLOGO', 'AUXILIAR', 'RECEPCION'];
+  const rolesPermitidosCambio = [
+    "ADMIN",
+    "ODONTOLOGO",
+    "AUXILIAR",
+    "RECEPCION",
+  ];
 
   if (!rolesPermitidosCambio.includes(nuevoRol)) {
-    throw new Error('Rol inválido');
+    throw new Error("Rol inválido");
   }
 
   const user = await prisma.usuario.findUnique({
-    where: { id: Number(userId) }
+    where: { id: Number(userId) },
   });
 
   if (!user) {
-    throw new Error('Usuario no encontrado');
+    throw new Error("Usuario no encontrado");
   }
 
   const updatedUser = await prisma.usuario.update({
@@ -186,8 +189,8 @@ export const updateUserRoleService = async (userId, nuevoRol) => {
       correo: true,
       rol: true,
       activo: true,
-      updatedAt: true
-    }
+      updatedAt: true,
+    },
   });
 
   return updatedUser;
@@ -195,11 +198,11 @@ export const updateUserRoleService = async (userId, nuevoRol) => {
 
 export const updateUserStatusService = async (userId, activo) => {
   const user = await prisma.usuario.findUnique({
-    where: { id: Number(userId) }
+    where: { id: Number(userId) },
   });
 
   if (!user) {
-    throw new Error('Usuario no encontrado');
+    throw new Error("Usuario no encontrado");
   }
 
   const updatedUser = await prisma.usuario.update({
@@ -212,8 +215,8 @@ export const updateUserStatusService = async (userId, activo) => {
       correo: true,
       rol: true,
       activo: true,
-      updatedAt: true
-    }
+      updatedAt: true,
+    },
   });
 
   return updatedUser;
