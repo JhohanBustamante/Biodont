@@ -31,8 +31,8 @@ odontogramaService.verTodos = async (queries) => {
 
 
 //  Crear (primer odontograma)
-odontogramaService.crear = async (req) => {
-  const { pacienteId, fecha, dientes } = req.body;
+odontogramaService.crear = async (body) => {
+  const { pacienteId, fecha, dientes } = body;
 
   return await prisma.odontograma.create({
     data: {

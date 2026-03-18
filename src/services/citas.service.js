@@ -1,71 +1,245 @@
-const citasService = {};
-const prisma = require("../config/prisma");
-const BadRequestError = require("../errors/BadRequestError");
-const ESTADOS_VALIDOS = ["PROGRAMADA", "CANCELADA", "ATENDIDA"];
+const prisma = require('../config/prisma');
 
-citasService.crear = async ({ fecha, motivo, observaciones, pacienteId }) => {
-  if (!pacienteId || !motivo || !fecha)
-    throw new BadRequestError("Datos faltantes para crear la cita");
-  return await prisma.cita.create({
+const getStartOfToday = () => {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+};
+
+const getEndOfToday = () => {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+};
+
+const formatHour = (dateValue) => {
+  const date = new Date(dateValue);
+
+  return date.toLocaleTimeString('es-CO', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  });
+};
+
+const formatDate = (dateValue) => {
+  const date = new Date(dateValue);
+
+  return date.toLocaleDateString('es-CO');
+};
+
+const createDateTime = (fecha, hora) => {
+  return new Date(`${fecha}T${hora}:00`);
+};
+
+const createCitaService = async (data) => {
+  const {
+    pacienteId,
+    usuarioId,
+    fecha,
+    hora,
+    motivo,
+    estado,
+    tipoAtencion
+  } = data;
+
+  if (!pacienteId || !fecha || !hora || !motivo) {
+    throw new Error('Paciente, fecha, hora y motivo son obligatorios');
+  }
+
+  const paciente = await prisma.paciente.findUnique({
+    where: { id: Number(pacienteId) }
+  });
+
+  if (!paciente) {
+    throw new Error('El paciente seleccionado no existe');
+  }
+
+  if (usuarioId) {
+    const usuario = await prisma.usuario.findUnique({
+      where: { id: Number(usuarioId) }
+    });
+
+    if (!usuario) {
+      throw new Error('El profesional seleccionado no existe');
+    }
+  }
+
+  const fechaCompleta = createDateTime(fecha, hora);
+
+  const cita = await prisma.cita.create({
     data: {
-      fecha: new Date(fecha),
-      motivo,
-      observaciones,
-      pacienteId,
+      pacienteId: Number(pacienteId),
+      usuarioId: usuarioId ? Number(usuarioId) : null,
+      fecha: fechaCompleta,
+      motivo: motivo.trim(),
+      estado: estado || 'PROGRAMADA',
+      tipoAtencion: tipoAtencion?.trim() || null
+    }
+  });
+
+  return cita;
+};
+
+const listCitasService = async () => {
+  const citas = await prisma.cita.findMany({
+    orderBy: {
+      fecha: 'asc'
     },
+    include: {
+      paciente: {
+        select: {
+          nombre: true,
+          apellido: true
+        }
+      },
+      usuario: {
+        select: {
+          nombre: true,
+          apellido: true,
+          rol: true
+        }
+      }
+    }
   });
+
+  return citas.map((cita) => ({
+    id: cita.id,
+    hora: formatHour(cita.fecha),
+    fecha: formatDate(cita.fecha),
+    pacienteNombre: `${cita.paciente.nombre} ${cita.paciente.apellido}`.trim(),
+    profesional: cita.usuario
+      ? `${cita.usuario.nombre} ${cita.usuario.apellido}`.trim()
+      : 'Sin asignar',
+    motivo: cita.motivo,
+    tipoAtencion: cita.tipoAtencion || 'General',
+    estado: cita.estado
+  }));
 };
 
-citasService.verPorPaciente = async ({ pacienteId }) => {
-  if (!pacienteId) throw new BadRequestError("Id del paciente no enviado.");
+const getCitasStatsService = async () => {
+  const startOfToday = getStartOfToday();
+  const endOfToday = getEndOfToday();
 
-  return await prisma.cita.findMany({
-    where: { pacienteId },
-    orderBy: { fecha: "asc" },
-  });
+  const [citasHoy, confirmadas, canceladas] = await Promise.all([
+    prisma.cita.count({
+      where: {
+        fecha: {
+          gte: startOfToday,
+          lt: endOfToday
+        }
+      }
+    }),
+    prisma.cita.count({
+      where: {
+        fecha: {
+          gte: startOfToday,
+          lt: endOfToday
+        },
+        estado: 'CONFIRMADA'
+      }
+    }),
+    prisma.cita.count({
+      where: {
+        fecha: {
+          gte: startOfToday,
+          lt: endOfToday
+        },
+        estado: 'CANCELADA'
+      }
+    })
+  ]);
+
+  return {
+    citasHoy,
+    confirmadas,
+    canceladas
+  };
 };
 
-citasService.verPorPacienteYEstado = async ({ pacienteId, estado }) => {
-  if (!pacienteId || !estado)
-    throw new BadRequestError("Id del paciente o estado no enviados.");
-  if (!ESTADOS_VALIDOS.includes(estado))
-    throw new BadRequestError(
-      "Estado no válido. Solo se acepta PROGRAMADA, CANCELADA o ATENDIDA",
-    );
+const getUpcomingCitasService = async () => {
+  const startOfToday = getStartOfToday();
+  const endOfToday = getEndOfToday();
 
-  return await prisma.cita.findMany({
-    where: { pacienteId, estado },
-    orderBy: { fecha: "asc" },
+  const citas = await prisma.cita.findMany({
+    where: {
+      fecha: {
+        gte: startOfToday,
+        lt: endOfToday
+      }
+    },
+    orderBy: {
+      fecha: 'asc'
+    },
+    take: 5,
+    include: {
+      paciente: {
+        select: {
+          nombre: true,
+          apellido: true
+        }
+      },
+      usuario: {
+        select: {
+          nombre: true,
+          apellido: true
+        }
+      }
+    }
   });
+
+  return citas.map((cita) => ({
+    id: cita.id,
+    hora: formatHour(cita.fecha),
+    pacienteNombre: `${cita.paciente.nombre} ${cita.paciente.apellido}`.trim(),
+    motivo: cita.motivo,
+    profesional: cita.usuario
+      ? `${cita.usuario.nombre} ${cita.usuario.apellido}`.trim()
+      : 'Sin asignar',
+    estado: cita.estado
+  }));
 };
 
-citasService.actualizarEstado = async ({ id, estado }) => {
-  if (!id || !estado)
-    throw new BadRequestError("Id del paciente o estado no enviados.");
-  if (!ESTADOS_VALIDOS.includes(estado))
-    throw new BadRequestError(
-      "Estado no válido. Solo se acepta PROGRAMADA, CANCELADA o ATENDIDA",
-    );
+const getAgendaSummaryService = async () => {
+  const startOfToday = getStartOfToday();
+  const endOfToday = getEndOfToday();
 
-  return await prisma.cita.update({
-    where: { id },
-    data: { estado }
+  const citas = await prisma.cita.findMany({
+    where: {
+      fecha: {
+        gte: startOfToday,
+        lt: endOfToday
+      }
+    },
+    orderBy: {
+      fecha: 'asc'
+    }
   });
+
+  if (citas.length === 0) {
+    return {
+      primerTurno: 'Sin agenda',
+      ultimoTurno: 'Sin agenda',
+      espaciosDisponibles: 0
+    };
+  }
+
+  const primerTurno = formatHour(citas[0].fecha);
+  const ultimoTurno = formatHour(citas[citas.length - 1].fecha);
+  const espaciosDisponibles = Math.max(0, 10 - citas.length);
+
+  return {
+    primerTurno,
+    ultimoTurno,
+    espaciosDisponibles
+  };
 };
 
-citasService.verTodos = async (queries) => {
-  const motivo = queries.motivo?.trim();
-  const observaciones = queries.observaciones?.trim();
-  const estado = queries.estado?.trim();
-  const where = {};
-  if (motivo) where.motivo = { contains: motivo.toLowerCase() };
-  if (observaciones) where.observaciones = { contains: observaciones.toLowerCase() };
-  if (estado) where.estado =  estado.toUpperCase();
 
-  return await prisma.cita.findMany({
-    where,
-    orderBy: { estado:"asc" }
-  });
+
+module.exports = {
+  createCitaService,
+  listCitasService,
+  getCitasStatsService,
+  getUpcomingCitasService,
+  getAgendaSummaryService,
+  
 };
-
-module.exports = citasService;

@@ -1,78 +1,99 @@
-const citasService = require("../services/citas.service");
-const pacientesController = require("./pacientes.controller");
-const citasController = {};
+const {
+  createCitaService,
+  listCitasService,
+  getCitasStatsService,
+  getUpcomingCitasService,
+  getAgendaSummaryService
+} = require('../services/citas.service');
 
-citasController.crear = async (req, res) => {
+
+
+const createCita = async (req, res) => {
   try {
-    const cita = await citasService.crear(req.body);
-    res.status(201).json(cita);
+    const cita = await createCitaService(req.body);
+
+    return res.status(201).json({
+      ok: true,
+      message: 'Cita registrada correctamente',
+      data: cita
+    });
   } catch (error) {
-    console.error(error);
-
-    if (error.isOperational)
-      return res.status(error.statusCode).json({ message: error.message });
-
-    res.status(500).json({
-      message: "Error interno del servidor",
+    return res.status(400).json({
+      ok: false,
+      message: error.message
     });
   }
 };
 
-citasController.verCita = async (req, res) => {
+const listCitas = async (req, res) => {
   try {
-    const pacienteId = Number(req.params.id);
-    const estado = req.params.estado.toUpperCase();
-    let citas;
-    if (!estado || estado === ":ESTADO") {
-      citas = await citasService.verPorPaciente({ pacienteId });
-    } else {
-      citas = await citasService.verPorPacienteYEstado({ pacienteId, estado });
-    }
-    res.status(200).json(citas);
+    const citas = await listCitasService();
+
+    return res.status(200).json({
+      ok: true,
+      data: citas
+    });
   } catch (error) {
-    console.log(error);
-
-    if (error.isOperational)
-      return res.status(error.statusCode).json({ message: error.message });
-
-    res
-      .status(500)
-      .json({ message: "Error interno en el servidor al crear la cita." });
+    return res.status(500).json({
+      ok: false,
+      message: 'No se pudo obtener el listado de citas'
+    });
   }
 };
 
-citasController.verTodos = async (req, res) => {
+const getCitasStats = async (req, res) => {
   try {
-    const citas = await citasService.verTodos(req.query)
-    res.status(200).json(citas);
+    const stats = await getCitasStatsService();
+
+    return res.status(200).json({
+      ok: true,
+      data: stats
+    });
   } catch (error) {
-    console.log(error);
-
-    if (error.isOperational)
-      return res.status(error.statusCode).json({ message: error.message });
-
-    res
-      .status(500)
-      .json({ message: "Error interno en el servidor al ver la cita." });
-
-  }
-}
-
-citasController.actualizarCita = async (req, res) => {
-  try {
-    const id = Number(req.params.id);
-    const estado = req.params.estado.toUpperCase();
-    const citas = await citasService.actualizarEstado({ id, estado });
-    res.status(200).json(citas);
-
-  } catch (error) {
-    console.log(error);
-    if (error.isOperational)
-      return res.status(error.statusCode).json({ message: error.message });
-    res
-      .status(500)
-      .json({ message: "Error interno en el servidor al crear la cita." });
+    return res.status(500).json({
+      ok: false,
+      message: 'No se pudieron obtener las estadísticas de citas'
+    });
   }
 };
 
-module.exports = citasController;
+const getUpcomingCitas = async (req, res) => {
+  try {
+    const citas = await getUpcomingCitasService();
+
+    return res.status(200).json({
+      ok: true,
+      data: citas
+    });
+  } catch (error) {
+    return res.status(500).json({
+      ok: false,
+      message: 'No se pudieron obtener las próximas citas'
+    });
+  }
+};
+
+const getAgendaSummary = async (req, res) => {
+  try {
+    const summary = await getAgendaSummaryService();
+
+    return res.status(200).json({
+      ok: true,
+      data: summary
+    });
+  } catch (error) {
+    return res.status(500).json({
+      ok: false,
+      message: 'No se pudo obtener el resumen de agenda'
+    });
+  }
+};
+
+module.exports = {
+  createCita,
+  listCitas,
+  getCitasStats,
+  getUpcomingCitas,
+  getAgendaSummary,
+  
+};

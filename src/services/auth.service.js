@@ -221,3 +221,29 @@ export const updateUserStatusService = async (userId, activo) => {
 
   return updatedUser;
 };
+
+export const getClinicalStaffService = async () => {
+  const users = await prisma.usuario.findMany({
+    where: {
+      activo: true,
+      rol: {
+        in: ['ODONTOLOGO', 'AUXILIAR']
+      }
+    },
+    orderBy: {
+      nombre: 'asc'
+    },
+    select: {
+      id: true,
+      nombre: true,
+      apellido: true,
+      rol: true
+    }
+  });
+
+  return users.map((user) => ({
+    id: user.id,
+    nombreCompleto: `${user.nombre} ${user.apellido}`.trim(),
+    rol: user.rol
+  }));
+};

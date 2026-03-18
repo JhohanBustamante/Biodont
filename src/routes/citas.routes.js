@@ -1,13 +1,22 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const controllerCitas = require('../controllers/citas.controller')
 
-router.post("/", controllerCitas.crear);
+const {
+  createCita,
+  listCitas,
+  getCitasStats,
+  getUpcomingCitas,
+  getAgendaSummary
+} = require('../controllers/citas.controller');
 
-router.get("/paciente/:id/estado/:estado", controllerCitas.verCita);
+const { authMiddleware } = require('../middlewares/auth.middleware');
 
-router.put("/:id/estado/:estado", controllerCitas.actualizarCita);
+router.use(authMiddleware);
 
-router.get("/", controllerCitas.verTodos)
+router.get('/', listCitas);
+router.get('/stats', getCitasStats);
+router.get('/upcoming', getUpcomingCitas);
+router.get('/summary', getAgendaSummary);
+router.post('/', createCita);
 
 module.exports = router;

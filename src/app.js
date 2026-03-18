@@ -7,6 +7,7 @@ const finanzasRoutes = require('./routes/finanzas.routes');
 const odontogramaRoutes = require('./routes/odontograma.routes');
 const authRoutes = require('./routes/auth.routes.js');
 const dashboardRoutes = require('./routes/dashboard.routes');
+const historiasClinicasRoutes = require('./routes/historias-clinicas.routes');
 
 const cors = require('cors');
 const morgan = require('morgan');
@@ -17,10 +18,12 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/auth', authRoutes)
-app.use('/dashboard', dashboardRoutes);app.use('/pacientes', pacientesRoutes);
+app.use('/dashboard', dashboardRoutes);
+app.use('/pacientes', pacientesRoutes);
 app.use('/citas', citasRoutes)
 app.use('/finanzas', finanzasRoutes)
 app.use('/odontograma', odontogramaRoutes)
+app.use('/historias-clinicas', historiasClinicasRoutes)
 
 
 app.get('/api/v1/health', async (req, res) => {

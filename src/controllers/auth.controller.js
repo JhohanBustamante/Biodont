@@ -4,8 +4,28 @@ import {
   getProfileService,
   listUsersService,
   updateUserRoleService,
-  updateUserStatusService
+  updateUserStatusService,
+  getClinicalStaffService
 } from '../services/auth.service.js';
+
+
+
+export const getClinicalStaff = async (req, res) => {
+  try {
+    const users = await getClinicalStaffService();
+
+    return res.status(200).json({
+      ok: true,
+      data: users
+    });
+  } catch (error) {
+    return res.status(500).json({
+      ok: false,
+      message: 'No se pudo obtener el personal clínico'
+    });
+  }
+};
+
 
 export const registerUser = async (req, res) => {
   try {

@@ -1,22 +1,22 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const pacientesController = require("../controllers/pacientes.controller")
+
+const {
+  createPaciente,
+  listPacientes,
+  getPacienteById,
+  getRecentPacientes,
+  getPacientesQuickInfo
+} = require('../controllers/pacientes.controller');
 
 const { authMiddleware } = require('../middlewares/auth.middleware');
-const { roleMiddleware } = require('../middlewares/role.middleware');
 
-router.post("/", pacientesController.crear);
+router.use(authMiddleware);
 
-router.get("/", pacientesController.verTodos)
-
-router.get("/:id", pacientesController.verPorId)
-
-router.delete("/:id", pacientesController.eliminar)
-
-router.put("/activar/:id", pacientesController.activar)
-
-router.get("/documento/:documento", pacientesController.verPorDocumento)
-
-router.put("/actualizar/:id", pacientesController.actualizar)
+router.get('/', listPacientes);
+router.get('/recent', getRecentPacientes);
+router.get('/quick-info', getPacientesQuickInfo);
+router.get('/:id', getPacienteById);
+router.post('/', createPaciente);
 
 module.exports = router;
