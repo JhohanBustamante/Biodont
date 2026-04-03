@@ -4,67 +4,63 @@ import { generateToken } from "../utils/jwt.js";
 
 const ROLES_PERMITIDOS_REGISTRO = ["ODONTOLOGO", "AUXILIAR", "RECEPCION"];
 
+import { AppError } from '../utils/AppError.js';
+
 export const registerUserService = async (data) => {
-  try {
-    let { nombre, apellido, correo, password, rol, telefono, documento } = data;
+  let { nombre, apellido, correo, password, rol, telefono, documento } = data;
 
-    if (!nombre || !apellido || !correo || !password || !rol) {
-      throw new Error("Todos los campos obligatorios deben ser completados");
-    }
-    console.log(data)
-    rol = rol.toUpperCase().trim();
-
-    if (!ROLES_PERMITIDOS_REGISTRO.includes(rol)) {
-      throw new Error("Rol no permitido para registro");
-    }
-
-    const existingUserByEmail = await prisma.usuario.findUnique({
-      where: { correo },
-    });
-
-    if (existingUserByEmail) {
-      throw new Error("El correo ya está registrado");
-    }
-
-    if (documento) {
-      const existingUserByDocument = await prisma.usuario.findUnique({
-        where: { documento },
-      });
-
-      if (existingUserByDocument) {
-        throw new Error("El documento ya está registrado");
-      }
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const newUser = await prisma.usuario.create({
-      data: {
-        nombre,
-        apellido,
-        correo,
-        password: hashedPassword,
-        rol,
-        telefono,
-        documento,
-      },
-      select: {
-        id: true,
-        nombre: true,
-        apellido: true,
-        correo: true,
-        rol: true,
-        telefono: true,
-        documento: true,
-        activo: true,
-        createdAt: true,
-      },
-    });
-
-    return newUser;
-  } catch (error) {
-    console.log(error);
+  if (!nombre || !apellido || !correo || !password || !rol) {
+    throw new AppError('Todos los campos obligatorios deben ser completados', 400);
   }
+
+  rol = rol.toUpperCase().trim();
+
+  if (!ROLES_PERMITIDOS_REGISTRO.includes(rol)) {
+    throw new AppError('Rol no permitido para registro', 400);
+  }
+
+  const existingUserByEmail = await prisma.usuario.findUnique({
+    where: { correo },
+  });
+
+  if (existingUserByEmail) {
+    throw new AppError('El correo ya está registrado', 409);
+  }
+
+  if (documento) {
+    const existingUserByDocument = await prisma.usuario.findUnique({
+      where: { documento },
+    });
+
+    if (existingUserByDocument) {
+      throw new AppError('El documento ya está registrado', 409);
+    }
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  return await prisma.usuario.create({
+    data: {
+      nombre,
+      apellido,
+      correo,
+      password: hashedPassword,
+      rol,
+      telefono,
+      documento,
+    },
+    select: {
+      id: true,
+      nombre: true,
+      apellido: true,
+      correo: true,
+      rol: true,
+      telefono: true,
+      documento: true,
+      activo: true,
+      createdAt: true,
+    },
+  });
 };
 
 export const loginUserService = async (correo, password) => {

@@ -37,9 +37,11 @@ export const registerUser = async (req, res) => {
       data: user
     });
   } catch (error) {
-    return res.status(400).json({
+    console.error('Error en registerUser:', error);
+
+    return res.status(error.statusCode || 500).json({
       ok: false,
-      message: error.message
+      message: error.statusCode ? error.message : 'Error interno del servidor'
     });
   }
 };

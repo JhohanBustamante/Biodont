@@ -1,8 +1,6 @@
 const prisma = require("../config/prisma");
 const odontogramaService = {};
 
-
-// Ver todos
 odontogramaService.verTodos = async (queries) => {
   const where = {};
 
@@ -29,23 +27,48 @@ odontogramaService.verTodos = async (queries) => {
   });
 };
 
-
-//  Crear (primer odontograma)
 odontogramaService.crear = async (body) => {
   const { pacienteId, fecha, dientes } = body;
+
+  if (!pacienteId) {
+    throw new Error("El paciente es obligatorio");
+  }
+
+  const pacienteIdNumber = Number(pacienteId);
+
+  const paciente = await prisma.paciente.findUnique({
+    where: { id: pacienteIdNumber },
+  });
+
+  if (!paciente) {
+    throw new Error("Paciente no encontrado");
+  }
+
+  const odontogramaActivo = await prisma.odontograma.findFirst({
+    where: {
+      pacienteId: pacienteIdNumber,
+      activo: true,
+    },
+    orderBy: {
+      version: "desc",
+    },
+  });
+
+  if (odontogramaActivo) {
+    throw new Error("El paciente ya tiene un odontograma activo. Debe versionarse.");
+  }
 
   return await prisma.odontograma.create({
     data: {
       paciente: {
-        connect: { id: Number(pacienteId) },
+        connect: { id: pacienteIdNumber },
       },
-
-      fecha: fecha ? new Date(fecha) : undefined,
-
+      version: 1,
+      activo: true,
+      fecha: fecha ? new Date(fecha) : new Date(),
       dientes: {
         create: (dientes || []).map((diente) => ({
           numero: diente.numero,
-
           superficies: {
             create: (diente.superficies || []).map((superficie) => ({
               superficie: superficie.superficie,
@@ -65,15 +88,14 @@ odontogramaService.crear = async (body) => {
   });
 };
 
-
-// Versionar (UPDATE REAL)
 odontogramaService.versionar = async (id, body) => {
-    console.log("Servicio de versionar");
-    console.log(body)
   const { pacienteId, dientes } = body;
-  return await prisma.$transaction(async (tx) => {
 
-    // 1️Buscar actual
+  if (!pacienteId) {
+    throw new Error("El paciente es obligatorio");
+  }
+
+  return await prisma.$transaction(async (tx) => {
     const actual = await tx.odontograma.findUnique({
       where: { id: Number(id) },
     });
@@ -82,21 +104,23 @@ odontogramaService.versionar = async (id, body) => {
       throw new Error("Odontograma no encontrado");
     }
 
-    // Desactivar actual
+    if (actual.pacienteId !== Number(pacienteId)) {
+      throw new Error("El odontograma no pertenece al paciente enviado");
+    }
+
     await tx.odontograma.update({
       where: { id: Number(id) },
       data: { activo: false },
     });
 
-    // 3Crear nueva versión
     const nuevo = await tx.odontograma.create({
       data: {
         paciente: {
           connect: { id: Number(pacienteId) },
         },
         version: actual.version + 1,
+        activo: true,
         fecha: new Date(),
-
         dientes: {
           create: (dientes || []).map((diente) => ({
             numero: diente.numero,
@@ -111,7 +135,9 @@ odontogramaService.versionar = async (id, body) => {
       },
       include: {
         dientes: {
-          include: { superficies: true },
+          include: {
+            superficies: true,
+          },
         },
       },
     });
@@ -120,8 +146,6 @@ odontogramaService.versionar = async (id, body) => {
   });
 };
 
-
-//  Eliminar (soft delete)
 odontogramaService.eliminar = async (id) => {
   return await prisma.odontograma.update({
     where: { id: Number(id) },
@@ -131,8 +155,6 @@ odontogramaService.eliminar = async (id) => {
   });
 };
 
-
-//  Ver activo por paciente
 odontogramaService.verPorUsuario = async (pacienteId) => {
   return await prisma.odontograma.findFirst({
     where: {
@@ -152,5 +174,22 @@ odontogramaService.verPorUsuario = async (pacienteId) => {
   });
 };
 
+odontogramaService.verHistorial = async (pacienteId) => {
+  return await prisma.odontograma.findMany({
+    where: {
+      pacienteId: Number(pacienteId),
+    },
+    orderBy: {
+      version: "desc",
+    },
+    include: {
+      dientes: {
+        include: {
+          superficies: true,
+        },
+      },
+    },
+  });
+};
 
 module.exports = odontogramaService;

@@ -71,20 +71,20 @@ model Paciente {
 //////////////////////////////////////////////////////
 
 model Usuario {
-  id         Int        @id @default(autoincrement())
-  nombre     String
-  apellido   String
-  correo     String     @unique
-  password   String
-  rol        RolUsuario
-  telefono   String?
-  documento  String?    @unique
-  activo     Boolean    @default(true)
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
+  id                Int       @id @default(autoincrement())
+  nombre            String
+  apellido          String
+  correo            String    @unique
+  password          String
+  rol               RolUsuario
+  telefono          String?
+  documento         String?   @unique
+  activo            Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
-  citas         Cita[]
-  tratamientos  Tratamiento[]
+  citas             Cita[]
+  tratamientos      Tratamiento[]
   historiasClinicas HistoriaClinica[]
 
   @@index([correo])
@@ -95,12 +95,13 @@ model Usuario {
 //////////////////////////////////////////////////////
 
 model HistoriaClinica {
-  id                         Int       @id @default(autoincrement())
+  id                         Int          @id @default(autoincrement())
   pacienteId                 Int
   usuarioId                  Int?
+  odontogramaId              Int?
 
-  numeroHistoria             String    @unique
-  fechaApertura              DateTime  @default(now())
+  numeroHistoria             String       @unique
+  fechaApertura              DateTime     @default(now())
 
   estadoCivil                String?
   sexo                       String?
@@ -123,16 +124,18 @@ model HistoriaClinica {
   antecedentesOdontologicos  String?
 
   higieneOral                Json?
-  declaracionAceptada        Boolean   @default(false)
+  declaracionAceptada        Boolean      @default(false)
 
-  createdAt                  DateTime  @default(now())
-  updatedAt                  DateTime  @updatedAt
+  createdAt                  DateTime     @default(now())
+  updatedAt                  DateTime     @updatedAt
 
-  paciente                   Paciente  @relation(fields: [pacienteId], references: [id])
-  usuario                    Usuario?  @relation(fields: [usuarioId], references: [id])
+  paciente                   Paciente     @relation(fields: [pacienteId], references: [id])
+  usuario                    Usuario?     @relation(fields: [usuarioId], references: [id])
+  odontograma                Odontograma? @relation(fields: [odontogramaId], references: [id])
 
   @@index([pacienteId])
   @@index([usuarioId])
+  @@index([odontogramaId])
 }
 
 //////////////////////////////////////////////////////
@@ -140,20 +143,20 @@ model HistoriaClinica {
 //////////////////////////////////////////////////////
 
 model Cita {
-  id            Int        @id @default(autoincrement())
-  pacienteId     Int
-  usuarioId      Int?
+  id            Int         @id @default(autoincrement())
+  pacienteId    Int
+  usuarioId     Int?
 
-  fecha          DateTime
-  motivo         String
-  tipoAtencion   String?
-  estado         EstadoCita @default(PROGRAMADA)
+  fecha         DateTime
+  motivo        String
+  tipoAtencion  String?
+  estado        EstadoCita  @default(PROGRAMADA)
 
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 
-  paciente       Paciente   @relation(fields: [pacienteId], references: [id])
-  usuario        Usuario?   @relation(fields: [usuarioId], references: [id])
+  paciente      Paciente    @relation(fields: [pacienteId], references: [id])
+  usuario       Usuario?    @relation(fields: [usuarioId], references: [id])
 
   @@index([pacienteId])
   @@index([usuarioId])
@@ -165,21 +168,21 @@ model Cita {
 //////////////////////////////////////////////////////
 
 model Tratamiento {
-  id           Int                @id @default(autoincrement())
+  id           Int                 @id @default(autoincrement())
   pacienteId   Int
   usuarioId    Int?
 
   descripcion  String
-  estado       EstadoTratamiento  @default(ACTIVO)
+  estado       EstadoTratamiento   @default(ACTIVO)
 
   fechaInicio  DateTime?
   fechaFin     DateTime?
 
-  createdAt    DateTime           @default(now())
-  updatedAt    DateTime           @updatedAt
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
 
-  paciente     Paciente           @relation(fields: [pacienteId], references: [id])
-  usuario      Usuario?           @relation(fields: [usuarioId], references: [id])
+  paciente     Paciente            @relation(fields: [pacienteId], references: [id])
+  usuario      Usuario?            @relation(fields: [usuarioId], references: [id])
 
   @@index([pacienteId])
   @@index([usuarioId])
@@ -210,16 +213,20 @@ model Movimiento {
 //////////////////////////////////////////////////////
 
 model Odontograma {
-  id          Int       @id @default(autoincrement())
-  pacienteId  Int
-  fecha       DateTime  @default(now())
-  version     Int       @default(1)
-  activo      Boolean   @default(true)
+  id                 Int                @id @default(autoincrement())
+  pacienteId         Int
+  fecha              DateTime           @default(now())
+  version            Int                @default(1)
+  activo             Boolean            @default(true)
 
-  paciente    Paciente  @relation(fields: [pacienteId], references: [id])
-  dientes     Diente[]
+  paciente           Paciente           @relation(fields: [pacienteId], references: [id])
+  dientes            Diente[]
+  historiasClinicas  HistoriaClinica[]
 
   @@index([pacienteId])
+  @@index([pacienteId, activo])
+  @@index([pacienteId, version])
+  @@unique([pacienteId, version])
 }
 
 //////////////////////////////////////////////////////
@@ -227,11 +234,11 @@ model Odontograma {
 //////////////////////////////////////////////////////
 
 model Diente {
-  id             Int        @id @default(autoincrement())
+  id             Int                    @id @default(autoincrement())
   numero         Int
   odontogramaId  Int
 
-  odontograma    Odontograma @relation(fields: [odontogramaId], references: [id])
+  odontograma    Odontograma            @relation(fields: [odontogramaId], references: [id])
   superficies    DiagnosticoSuperficie[]
 
   @@index([odontogramaId])
