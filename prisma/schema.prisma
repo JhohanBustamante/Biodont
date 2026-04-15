@@ -36,6 +36,12 @@ enum EstadoTratamiento {
   PAUSADO
 }
 
+enum EstadoMovimiento {
+  PENDIENTE
+  PAGADO
+  CANCELADO
+}
+
 //////////////////////////////////////////////////////
 // PACIENTES
 //////////////////////////////////////////////////////
@@ -155,8 +161,9 @@ model Cita {
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
-  paciente      Paciente    @relation(fields: [pacienteId], references: [id])
-  usuario       Usuario?    @relation(fields: [usuarioId], references: [id])
+  paciente      Paciente     @relation(fields: [pacienteId], references: [id])
+  usuario       Usuario?     @relation(fields: [usuarioId], references: [id])
+  movimientos   Movimiento[]
 
   @@index([pacienteId])
   @@index([usuarioId])
@@ -193,19 +200,27 @@ model Tratamiento {
 //////////////////////////////////////////////////////
 
 model Movimiento {
-  id          Int             @id @default(autoincrement())
-  tipo        TipoMovimiento
-  concepto    String
-  monto       Float
-  fecha       DateTime
-  metodoPago  String?
-  pacienteId  Int?
-  createdAt   DateTime        @default(now())
+  id              Int               @id @default(autoincrement())
+  tipo            TipoMovimiento
+  concepto        String
+  monto           Float
+  fecha           DateTime
+  estado          EstadoMovimiento  @default(PENDIENTE)
+  metodoPago      String?
+  pacienteId      Int?
+  citaId          Int?
+  odontogramaId   Int?
+  createdAt       DateTime          @default(now())
 
-  paciente    Paciente?       @relation(fields: [pacienteId], references: [id])
+  paciente        Paciente?         @relation(fields: [pacienteId], references: [id])
+  cita            Cita?             @relation(fields: [citaId], references: [id])
+  odontograma     Odontograma?      @relation(fields: [odontogramaId], references: [id])
 
   @@index([pacienteId])
+  @@index([citaId])
+  @@index([odontogramaId])
   @@index([fecha])
+  @@index([estado])
 }
 
 //////////////////////////////////////////////////////
@@ -222,6 +237,7 @@ model Odontograma {
   paciente           Paciente           @relation(fields: [pacienteId], references: [id])
   dientes            Diente[]
   historiasClinicas  HistoriaClinica[]
+  movimientos        Movimiento[]
 
   @@index([pacienteId])
   @@index([pacienteId, activo])
