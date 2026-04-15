@@ -1,4 +1,4 @@
-import {
+const {
   registerUserService,
   loginUserService,
   getProfileService,
@@ -6,11 +6,9 @@ import {
   updateUserRoleService,
   updateUserStatusService,
   getClinicalStaffService
-} from '../services/auth.service.js';
+} = require('../services/auth.service');
 
-
-
-export const getClinicalStaff = async (req, res) => {
+const getClinicalStaff = async (req, res) => {
   try {
     const users = await getClinicalStaffService();
 
@@ -26,8 +24,7 @@ export const getClinicalStaff = async (req, res) => {
   }
 };
 
-
-export const registerUser = async (req, res) => {
+const registerUser = async (req, res) => {
   try {
     const user = await registerUserService(req.body);
 
@@ -46,7 +43,7 @@ export const registerUser = async (req, res) => {
   }
 };
 
-export const loginUser = async (req, res) => {
+const loginUser = async (req, res) => {
   try {
     const { correo, password } = req.body;
 
@@ -65,7 +62,7 @@ export const loginUser = async (req, res) => {
   }
 };
 
-export const getProfile = async (req, res) => {
+const getProfile = async (req, res) => {
   try {
     const user = await getProfileService(req.user.id);
 
@@ -81,7 +78,7 @@ export const getProfile = async (req, res) => {
   }
 };
 
-export const listUsers = async (req, res) => {
+const listUsers = async (req, res) => {
   try {
     const users = await listUsersService();
 
@@ -97,7 +94,7 @@ export const listUsers = async (req, res) => {
   }
 };
 
-export const updateUserRole = async (req, res) => {
+const updateUserRole = async (req, res) => {
   try {
     const { id } = req.params;
     const { rol } = req.body;
@@ -117,7 +114,7 @@ export const updateUserRole = async (req, res) => {
   }
 };
 
-export const updateUserStatus = async (req, res) => {
+const updateUserStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { activo } = req.body;
@@ -135,4 +132,14 @@ export const updateUserStatus = async (req, res) => {
       message: error.message
     });
   }
+};
+
+module.exports = {
+  getClinicalStaff,
+  registerUser,
+  loginUser,
+  getProfile,
+  listUsers,
+  updateUserRole,
+  updateUserStatus,
 };

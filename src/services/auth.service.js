@@ -1,12 +1,11 @@
-import bcrypt from "bcrypt";
-import prisma from "../lib/prisma.js";
-import { generateToken } from "../utils/jwt.js";
+const bcrypt = require('bcrypt');
+const prisma = require('../config/prisma');
+const { generateToken } = require('../utils/jwt');
+const AppError = require('../errors/AppError');
 
 const ROLES_PERMITIDOS_REGISTRO = ["ODONTOLOGO", "AUXILIAR", "RECEPCION"];
 
-import { AppError } from '../utils/AppError.js';
-
-export const registerUserService = async (data) => {
+const registerUserService = async (data) => {
   let { nombre, apellido, correo, password, rol, telefono, documento } = data;
 
   if (!nombre || !apellido || !correo || !password || !rol) {
@@ -63,15 +62,15 @@ export const registerUserService = async (data) => {
   });
 };
 
-export const loginUserService = async (correo, password) => {
+const loginUserService = async (correo, password) => {
   if (!correo || !password) {
     throw new Error("Correo y contraseña son obligatorios");
-  } 
+  }
 
   const user = await prisma.usuario.findUnique({
     where: { correo },
   });
-  console.log(user)
+
   if (!user) {
     throw new Error("Credenciales inválidas");
   }
@@ -85,13 +84,6 @@ export const loginUserService = async (correo, password) => {
   if (!isPasswordValid) {
     throw new Error("Credenciales inválidas");
   }
-
-  // await prisma.usuario.update({
-  //   where: { id: user.id },
-  //   data: {
-  //     ultimoAcceso: new Date(),
-  //   },
-  // });
 
   const token = generateToken(user);
 
@@ -110,7 +102,7 @@ export const loginUserService = async (correo, password) => {
   };
 };
 
-export const getProfileService = async (userId) => {
+const getProfileService = async (userId) => {
   const user = await prisma.usuario.findUnique({
     where: { id: userId },
     select: {
@@ -122,7 +114,6 @@ export const getProfileService = async (userId) => {
       telefono: true,
       documento: true,
       activo: true,
-      ultimoAcceso: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -135,7 +126,7 @@ export const getProfileService = async (userId) => {
   return user;
 };
 
-export const listUsersService = async () => {
+const listUsersService = async () => {
   return prisma.usuario.findMany({
     select: {
       id: true,
@@ -146,7 +137,6 @@ export const listUsersService = async () => {
       telefono: true,
       documento: true,
       activo: true,
-      ultimoAcceso: true,
       createdAt: true,
     },
     orderBy: {
@@ -155,13 +145,8 @@ export const listUsersService = async () => {
   });
 };
 
-export const updateUserRoleService = async (userId, nuevoRol) => {
-  const rolesPermitidosCambio = [
-    "ADMIN",
-    "ODONTOLOGO",
-    "AUXILIAR",
-    "RECEPCION",
-  ];
+const updateUserRoleService = async (userId, nuevoRol) => {
+  const rolesPermitidosCambio = ["ADMIN", "ODONTOLOGO", "AUXILIAR", "RECEPCION"];
 
   if (!rolesPermitidosCambio.includes(nuevoRol)) {
     throw new Error("Rol inválido");
@@ -175,7 +160,7 @@ export const updateUserRoleService = async (userId, nuevoRol) => {
     throw new Error("Usuario no encontrado");
   }
 
-  const updatedUser = await prisma.usuario.update({
+  return await prisma.usuario.update({
     where: { id: Number(userId) },
     data: { rol: nuevoRol },
     select: {
@@ -188,11 +173,9 @@ export const updateUserRoleService = async (userId, nuevoRol) => {
       updatedAt: true,
     },
   });
-
-  return updatedUser;
 };
 
-export const updateUserStatusService = async (userId, activo) => {
+const updateUserStatusService = async (userId, activo) => {
   const user = await prisma.usuario.findUnique({
     where: { id: Number(userId) },
   });
@@ -201,7 +184,7 @@ export const updateUserStatusService = async (userId, activo) => {
     throw new Error("Usuario no encontrado");
   }
 
-  const updatedUser = await prisma.usuario.update({
+  return await prisma.usuario.update({
     where: { id: Number(userId) },
     data: { activo: Boolean(activo) },
     select: {
@@ -214,11 +197,9 @@ export const updateUserStatusService = async (userId, activo) => {
       updatedAt: true,
     },
   });
-
-  return updatedUser;
 };
 
-export const getClinicalStaffService = async () => {
+const getClinicalStaffService = async () => {
   const users = await prisma.usuario.findMany({
     where: {
       activo: true,
@@ -226,9 +207,7 @@ export const getClinicalStaffService = async () => {
         in: ['ODONTOLOGO', 'AUXILIAR']
       }
     },
-    orderBy: {
-      nombre: 'asc'
-    },
+    orderBy: { nombre: 'asc' },
     select: {
       id: true,
       nombre: true,
@@ -242,4 +221,14 @@ export const getClinicalStaffService = async () => {
     nombreCompleto: `${user.nombre} ${user.apellido}`.trim(),
     rol: user.rol
   }));
+};
+
+module.exports = {
+  registerUserService,
+  loginUserService,
+  getProfileService,
+  listUsersService,
+  updateUserRoleService,
+  updateUserStatusService,
+  getClinicalStaffService,
 };
