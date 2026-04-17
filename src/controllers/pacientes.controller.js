@@ -3,7 +3,8 @@ const {
   listPacientesService,
   getPacienteByIdService,
   getRecentPacientesService,
-  getPacientesQuickInfoService
+  getPacientesQuickInfoService,
+  updatePacienteService
 } = require('../services/pacientes.service');
 
 const createPaciente = async (req, res) => {
@@ -87,10 +88,25 @@ const getPacientesQuickInfo = async (req, res) => {
   }
 };
 
+const updatePaciente = async (req, res) => {
+  try {
+    const paciente = await updatePacienteService(req.params.id, req.body);
+    return res.status(200).json({
+      ok: true,
+      message: 'Paciente actualizado correctamente',
+      data: paciente
+    });
+  } catch (error) {
+    const status = error.message === 'Paciente no encontrado' ? 404 : 400;
+    return res.status(status).json({ ok: false, message: error.message });
+  }
+};
+
 module.exports = {
   createPaciente,
   listPacientes,
   getPacienteById,
   getRecentPacientes,
-  getPacientesQuickInfo
+  getPacientesQuickInfo,
+  updatePaciente
 };

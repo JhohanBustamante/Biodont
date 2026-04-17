@@ -235,11 +235,27 @@ const getAgendaSummaryService = async () => {
 
 
 
+const ESTADOS_VALIDOS = ['PROGRAMADA', 'CONFIRMADA', 'ATENDIDA', 'CANCELADA'];
+
+const updateCitaEstadoService = async (id, estado) => {
+  if (!estado || !ESTADOS_VALIDOS.includes(estado.toUpperCase().trim())) {
+    throw new Error(`Estado inválido. Valores permitidos: ${ESTADOS_VALIDOS.join(', ')}`);
+  }
+
+  const cita = await prisma.cita.findUnique({ where: { id: Number(id) } });
+  if (!cita) throw new Error('Cita no encontrada');
+
+  return await prisma.cita.update({
+    where: { id: Number(id) },
+    data: { estado: estado.toUpperCase().trim() }
+  });
+};
+
 module.exports = {
   createCitaService,
   listCitasService,
   getCitasStatsService,
   getUpcomingCitasService,
   getAgendaSummaryService,
-  
+  updateCitaEstadoService
 };

@@ -21,8 +21,6 @@ odontogramaController.crear = async (req, res) => {
 
 odontogramaController.versionar = async (req, res) => {
   try {
-    console.log("Versionando odontograma");
-    console.log(req.body);
     const id = Number(req.params.id);
     const result = await odontogramaService.versionar(id, req.body);
     res.json(result);
@@ -34,9 +32,8 @@ odontogramaController.versionar = async (req, res) => {
 odontogramaController.verPorUsuario = async (req, res) => {
   try {
     const pacienteId = Number(req.params.pacienteId);
-  
+
     const result = await odontogramaService.verPorUsuario(pacienteId);
-    console.log(result);
     res.json(result);
   } catch (error) {
     res.status(500).json({ message: error.message });

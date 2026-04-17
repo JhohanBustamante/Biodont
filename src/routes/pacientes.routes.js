@@ -6,7 +6,8 @@ const {
   listPacientes,
   getPacienteById,
   getRecentPacientes,
-  getPacientesQuickInfo
+  getPacientesQuickInfo,
+  updatePaciente
 } = require('../controllers/pacientes.controller');
 
 const { authMiddleware } = require('../middlewares/auth.middleware');
@@ -18,5 +19,6 @@ router.get('/recent', getRecentPacientes);
 router.get('/quick-info', getPacientesQuickInfo);
 router.get('/:id', getPacienteById);
 router.post('/', createPaciente);
+router.patch('/:id', updatePaciente);
 
 module.exports = router;

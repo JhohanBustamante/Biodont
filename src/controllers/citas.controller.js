@@ -3,7 +3,8 @@ const {
   listCitasService,
   getCitasStatsService,
   getUpcomingCitasService,
-  getAgendaSummaryService
+  getAgendaSummaryService,
+  updateCitaEstadoService
 } = require('../services/citas.service');
 
 
@@ -89,11 +90,21 @@ const getAgendaSummary = async (req, res) => {
   }
 };
 
+const updateCitaEstado = async (req, res) => {
+  try {
+    const cita = await updateCitaEstadoService(req.params.id, req.body.estado);
+    return res.status(200).json({ ok: true, message: 'Estado actualizado correctamente', data: cita });
+  } catch (error) {
+    const status = error.message === 'Cita no encontrada' ? 404 : 400;
+    return res.status(status).json({ ok: false, message: error.message });
+  }
+};
+
 module.exports = {
   createCita,
   listCitas,
   getCitasStats,
   getUpcomingCitas,
   getAgendaSummary,
-  
+  updateCitaEstado
 };

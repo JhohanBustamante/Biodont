@@ -6,7 +6,8 @@ const {
   listCitas,
   getCitasStats,
   getUpcomingCitas,
-  getAgendaSummary
+  getAgendaSummary,
+  updateCitaEstado
 } = require('../controllers/citas.controller');
 
 const { authMiddleware } = require('../middlewares/auth.middleware');
@@ -18,5 +19,6 @@ router.get('/stats', getCitasStats);
 router.get('/upcoming', getUpcomingCitas);
 router.get('/summary', getAgendaSummary);
 router.post('/', createCita);
+router.patch('/:id/estado', updateCitaEstado);
 
 module.exports = router;

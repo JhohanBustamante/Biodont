@@ -159,10 +159,39 @@ const getPacientesQuickInfoService = async () => {
   };
 };
 
+const updatePacienteService = async (id, data) => {
+  const paciente = await prisma.paciente.findUnique({ where: { id: Number(id) } });
+  if (!paciente) throw new Error('Paciente no encontrado');
+
+  const { nombre, apellido, documento, telefono, correo, fechaNacimiento, direccion, eps, alergias, observaciones } = data;
+
+  if (documento && documento.trim() !== paciente.documento) {
+    const existing = await prisma.paciente.findUnique({ where: { documento: documento.trim() } });
+    if (existing) throw new Error('Ya existe un paciente con ese documento');
+  }
+
+  return await prisma.paciente.update({
+    where: { id: Number(id) },
+    data: {
+      nombre: nombre?.trim() ?? paciente.nombre,
+      apellido: apellido?.trim() ?? paciente.apellido,
+      documento: documento?.trim() ?? paciente.documento,
+      telefono: telefono?.trim() || null,
+      correo: correo?.trim() || null,
+      fechaNacimiento: fechaNacimiento ? new Date(fechaNacimiento) : null,
+      direccion: direccion?.trim() || null,
+      eps: eps?.trim() || null,
+      alergias: alergias?.trim() || null,
+      observaciones: observaciones?.trim() || null,
+    }
+  });
+};
+
 module.exports = {
   createPacienteService,
   listPacientesService,
   getPacienteByIdService,
   getRecentPacientesService,
-  getPacientesQuickInfoService
+  getPacientesQuickInfoService,
+  updatePacienteService
 };
