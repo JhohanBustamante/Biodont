@@ -211,6 +211,7 @@ model Movimiento {
   fecha           DateTime
   estado          EstadoMovimiento  @default(PENDIENTE)
   metodoPago      String?
+  diagnosticoRef  String?
   pacienteId      Int?
   citaId          Int?
   odontogramaId   Int?

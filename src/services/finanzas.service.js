@@ -6,7 +6,7 @@ const ESTADOS_VALIDOS = ['PENDIENTE', 'PAGADO', 'CANCELADO'];
 
 const finanzasService = {};
 
-finanzasService.crear = async ({ tipo, concepto, monto, fecha, estado, metodoPago, pacienteId, citaId, odontogramaId }) => {
+finanzasService.crear = async ({ tipo, concepto, monto, fecha, estado, metodoPago, diagnosticoRef, pacienteId, citaId, odontogramaId }) => {
   if (!tipo || !concepto || monto === undefined || !fecha) {
     throw new AppError('Los campos tipo, concepto, monto y fecha son obligatorios', 400);
   }
@@ -47,6 +47,7 @@ finanzasService.crear = async ({ tipo, concepto, monto, fecha, estado, metodoPag
       fecha: new Date(fecha),
       estado: estadoFinal,
       metodoPago: metodoPago || null,
+      diagnosticoRef: diagnosticoRef || null,
       pacienteId: pacienteId ? Number(pacienteId) : null,
       citaId: citaId ? Number(citaId) : null,
       odontogramaId: odontogramaId ? Number(odontogramaId) : null,
@@ -111,6 +112,19 @@ finanzasService.actualizarEstado = async (id, estado) => {
   return await prisma.movimiento.update({
     where: { id: Number(id) },
     data: { estado: estado.toUpperCase().trim() },
+  });
+};
+
+finanzasService.verPorOdontograma = async (odontogramaId) => {
+  const odontograma = await prisma.odontograma.findUnique({ where: { id: Number(odontogramaId) } });
+  if (!odontograma) throw new AppError('Odontograma no encontrado', 404);
+
+  return await prisma.movimiento.findMany({
+    where: { odontogramaId: Number(odontogramaId) },
+    orderBy: { fecha: 'desc' },
+    include: {
+      paciente: { select: { id: true, nombre: true, apellido: true } },
+    },
   });
 };
 

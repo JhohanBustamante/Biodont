@@ -48,6 +48,18 @@ finanzasController.actualizarEstado = async (req, res) => {
   }
 };
 
+finanzasController.verPorOdontograma = async (req, res) => {
+  try {
+    const movimientos = await finanzasService.verPorOdontograma(req.params.odontogramaId);
+    return res.status(200).json({ ok: true, data: movimientos });
+  } catch (error) {
+    return res.status(error.statusCode || 500).json({
+      ok: false,
+      message: error.statusCode ? error.message : 'Error interno del servidor',
+    });
+  }
+};
+
 finanzasController.eliminar = async (req, res) => {
   try {
     await finanzasService.eliminar(req.params.id);

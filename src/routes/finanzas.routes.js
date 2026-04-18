@@ -6,6 +6,7 @@ const { authMiddleware } = require('../middlewares/auth.middleware');
 router.use(authMiddleware);
 
 router.get('/', finanzasController.verTodos);
+router.get('/odontograma/:odontogramaId', finanzasController.verPorOdontograma);
 router.get('/:id', finanzasController.verPorId);
 router.post('/', finanzasController.crear);
 router.patch('/:id/estado', finanzasController.actualizarEstado);
