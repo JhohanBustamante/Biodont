@@ -36,6 +36,18 @@ finanzasController.verPorId = async (req, res) => {
   }
 };
 
+finanzasController.actualizar = async (req, res) => {
+  try {
+    const movimiento = await finanzasService.actualizar(req.params.id, req.body);
+    return res.status(200).json({ ok: true, data: movimiento });
+  } catch (error) {
+    return res.status(error.statusCode || 500).json({
+      ok: false,
+      message: error.statusCode ? error.message : 'Error interno del servidor',
+    });
+  }
+};
+
 finanzasController.actualizarEstado = async (req, res) => {
   try {
     const movimiento = await finanzasService.actualizarEstado(req.params.id, req.body.estado);

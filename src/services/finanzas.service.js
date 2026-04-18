@@ -101,6 +101,40 @@ finanzasService.verPorId = async (id) => {
   return movimiento;
 };
 
+finanzasService.actualizar = async (id, { tipo, concepto, monto, fecha, estado, metodoPago }) => {
+  const movimiento = await prisma.movimiento.findUnique({ where: { id: Number(id) } });
+  if (!movimiento) throw new AppError('Movimiento no encontrado', 404);
+
+  if (tipo && !TIPOS_VALIDOS.includes(tipo.toUpperCase().trim())) {
+    throw new AppError(`Tipo de movimiento inválido. Valores permitidos: ${TIPOS_VALIDOS.join(', ')}`, 400);
+  }
+
+  if (estado && !ESTADOS_VALIDOS.includes(estado.toUpperCase().trim())) {
+    throw new AppError(`Estado inválido. Valores permitidos: ${ESTADOS_VALIDOS.join(', ')}`, 400);
+  }
+
+  if (monto !== undefined && (isNaN(Number(monto)) || Number(monto) < 0)) {
+    throw new AppError('El monto debe ser un número mayor o igual a cero', 400);
+  }
+
+  return await prisma.movimiento.update({
+    where: { id: Number(id) },
+    data: {
+      ...(tipo      && { tipo: tipo.toUpperCase().trim() }),
+      ...(concepto  && { concepto }),
+      ...(monto !== undefined && { monto: Number(monto) }),
+      ...(fecha     && { fecha: new Date(fecha) }),
+      ...(estado    && { estado: estado.toUpperCase().trim() }),
+      ...(metodoPago !== undefined && { metodoPago: metodoPago || null }),
+    },
+    include: {
+      paciente: { select: { id: true, nombre: true, apellido: true } },
+      cita: { select: { id: true, fecha: true, motivo: true } },
+      odontograma: { select: { id: true, version: true } },
+    },
+  });
+};
+
 finanzasService.actualizarEstado = async (id, estado) => {
   if (!estado || !ESTADOS_VALIDOS.includes(estado.toUpperCase().trim())) {
     throw new AppError(`Estado inválido. Valores permitidos: ${ESTADOS_VALIDOS.join(', ')}`, 400);
