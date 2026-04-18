@@ -60,12 +60,13 @@ finanzasService.crear = async ({ tipo, concepto, monto, fecha, estado, metodoPag
   });
 };
 
-finanzasService.verTodos = async ({ tipo, estado, pacienteId, citaId, odontogramaId, fechaDesde, fechaHasta } = {}) => {
+finanzasService.verTodos = async ({ tipo, estado, pacienteId, sinPaciente, citaId, odontogramaId, fechaDesde, fechaHasta } = {}) => {
   const where = {};
 
   if (tipo) where.tipo = tipo.toUpperCase().trim();
   if (estado) where.estado = estado.toUpperCase().trim();
   if (pacienteId) where.pacienteId = Number(pacienteId);
+  if (sinPaciente === 'true' || sinPaciente === true) where.pacienteId = null;
   if (citaId) where.citaId = Number(citaId);
   if (odontogramaId) where.odontogramaId = Number(odontogramaId);
 

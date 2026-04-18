@@ -28,7 +28,7 @@ const createCita = async (req, res) => {
 
 const listCitas = async (req, res) => {
   try {
-    const citas = await listCitasService();
+    const citas = await listCitasService(req.query);
 
     return res.status(200).json({
       ok: true,

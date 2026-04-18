@@ -82,6 +82,7 @@ const listPacientesService = async () => {
     telefono: paciente.telefono,
     eps: paciente.eps,
     activo: paciente.activo,
+    fechaNacimiento: paciente.fechaNacimiento ? paciente.fechaNacimiento.toISOString().substring(0, 10) : null,
     ultimaCita: paciente.citas.length > 0 ? formatDate(paciente.citas[0].fecha) : 'Sin registro'
   }));
 };

@@ -28,7 +28,7 @@ odontogramaService.verTodos = async (queries) => {
 };
 
 odontogramaService.crear = async (body) => {
-  const { pacienteId, fecha, dientes } = body;
+  const { pacienteId, fecha, dientes, tipo } = body;
 
   if (!pacienteId) {
     throw new Error("El paciente es obligatorio");
@@ -65,6 +65,7 @@ odontogramaService.crear = async (body) => {
       },
       version: 1,
       activo: true,
+      tipo: tipo === 'PEDIATRICO' ? 'PEDIATRICO' : 'ADULTO',
       fecha: fecha ? new Date(fecha) : new Date(),
       dientes: {
         create: (dientes || []).map((diente) => ({
@@ -89,7 +90,7 @@ odontogramaService.crear = async (body) => {
 };
 
 odontogramaService.versionar = async (id, body) => {
-  const { pacienteId, dientes } = body;
+  const { pacienteId, dientes, tipo } = body;
 
   if (!pacienteId) {
     throw new Error("El paciente es obligatorio");
@@ -120,6 +121,7 @@ odontogramaService.versionar = async (id, body) => {
         },
         version: actual.version + 1,
         activo: true,
+        tipo: tipo === 'PEDIATRICO' ? 'PEDIATRICO' : (actual.tipo ?? 'ADULTO'),
         fecha: new Date(),
         dientes: {
           create: (dientes || []).map((diente) => ({

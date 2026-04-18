@@ -79,25 +79,28 @@ const createCitaService = async (data) => {
   return cita;
 };
 
-const listCitasService = async () => {
+const listCitasService = async ({ estado, tipoAtencion, pacienteId, fechaDesde, fechaHasta } = {}) => {
+  const where = {};
+
+  if (estado) where.estado = estado.toUpperCase().trim();
+  if (tipoAtencion) where.tipoAtencion = tipoAtencion;
+  if (pacienteId) where.pacienteId = Number(pacienteId);
+  if (fechaDesde || fechaHasta) {
+    where.fecha = {};
+    if (fechaDesde) where.fecha.gte = new Date(fechaDesde);
+    if (fechaHasta) {
+      const hasta = new Date(fechaHasta);
+      hasta.setHours(23, 59, 59, 999);
+      where.fecha.lte = hasta;
+    }
+  }
+
   const citas = await prisma.cita.findMany({
-    orderBy: {
-      fecha: 'asc'
-    },
+    where,
+    orderBy: { fecha: 'asc' },
     include: {
-      paciente: {
-        select: {
-          nombre: true,
-          apellido: true
-        }
-      },
-      usuario: {
-        select: {
-          nombre: true,
-          apellido: true,
-          rol: true
-        }
-      }
+      paciente: { select: { nombre: true, apellido: true } },
+      usuario: { select: { nombre: true, apellido: true, rol: true } }
     }
   });
 

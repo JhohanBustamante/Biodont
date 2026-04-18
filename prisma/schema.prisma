@@ -238,6 +238,7 @@ model Odontograma {
   fecha              DateTime           @default(now())
   version            Int                @default(1)
   activo             Boolean            @default(true)
+  tipo               String             @default("ADULTO")
 
   paciente           Paciente           @relation(fields: [pacienteId], references: [id])
   dientes            Diente[]
