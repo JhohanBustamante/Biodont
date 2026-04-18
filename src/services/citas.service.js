@@ -108,6 +108,7 @@ const listCitasService = async ({ estado, tipoAtencion, pacienteId, fechaDesde, 
     id: cita.id,
     hora: formatHour(cita.fecha),
     fecha: formatDate(cita.fecha),
+    fechaISO: `${cita.fecha.getFullYear()}-${String(cita.fecha.getMonth() + 1).padStart(2, '0')}-${String(cita.fecha.getDate()).padStart(2, '0')}`,
     pacienteNombre: `${cita.paciente.nombre} ${cita.paciente.apellido}`.trim(),
     profesional: cita.usuario
       ? `${cita.usuario.nombre} ${cita.usuario.apellido}`.trim()
