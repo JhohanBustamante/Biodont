@@ -25,6 +25,19 @@ odontogramaController.crear = async (req, res) => {
   }
 };
 
+odontogramaController.actualizarDientes = async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const result = await odontogramaService.actualizarDientes(id, req.body);
+    res.json(result);
+  } catch (error) {
+    res.status(error.statusCode || 500).json({
+      ok: false,
+      message: error.statusCode ? error.message : 'Error interno del servidor',
+    });
+  }
+};
+
 odontogramaController.versionar = async (req, res) => {
   try {
     const id = Number(req.params.id);

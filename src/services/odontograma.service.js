@@ -145,7 +145,87 @@ odontogramaService.versionar = async (id, body) => {
       },
     });
 
+    // Transferir movimientos PENDIENTE al nuevo odontograma
+    await tx.movimiento.updateMany({
+      where: { odontogramaId: Number(id), estado: 'PENDIENTE' },
+      data: {
+        odontogramaId: nuevo.id,
+        nota: `Transferido desde odontograma v${actual.version}`,
+      },
+    });
+
     return nuevo;
+  });
+};
+
+odontogramaService.actualizarDientes = async (id, body) => {
+  const { pacienteId, dientes, tipo } = body;
+
+  if (!pacienteId) {
+    throw new AppError("El paciente es obligatorio", 400);
+  }
+
+  return await prisma.$transaction(async (tx) => {
+    const actual = await tx.odontograma.findUnique({
+      where: { id: Number(id) },
+    });
+
+    if (!actual) {
+      throw new AppError("Odontograma no encontrado", 404);
+    }
+
+    if (!actual.activo) {
+      throw new AppError("Solo se puede editar el odontograma activo", 409);
+    }
+
+    if (actual.pacienteId !== Number(pacienteId)) {
+      throw new AppError("El odontograma no pertenece al paciente enviado", 403);
+    }
+
+    // Eliminar todos los dientes actuales y reemplazarlos
+    const dienteIds = await tx.diente.findMany({
+      where: { odontogramaId: Number(id) },
+      select: { id: true },
+    });
+
+    await tx.diagnosticoSuperficie.deleteMany({
+      where: { dienteId: { in: dienteIds.map((d) => d.id) } },
+    });
+
+    await tx.diente.deleteMany({
+      where: { odontogramaId: Number(id) },
+    });
+
+    if (tipo) {
+      await tx.odontograma.update({
+        where: { id: Number(id) },
+        data: { tipo: tipo === 'PEDIATRICO' ? 'PEDIATRICO' : tipo === 'MIXTO' ? 'MIXTO' : 'ADULTO' },
+      });
+    }
+
+    return await tx.odontograma.update({
+      where: { id: Number(id) },
+      data: {
+        dientes: {
+          create: (dientes || []).map((diente) => ({
+            numero: diente.numero,
+            superficies: {
+              create: (diente.superficies || []).map((superficie) => ({
+                superficie: superficie.superficie,
+                diagnostico: superficie.diagnostico,
+              })),
+            },
+          })),
+        },
+      },
+      include: {
+        dientes: {
+          include: {
+            superficies: true,
+          },
+        },
+      },
+    });
   });
 };
 

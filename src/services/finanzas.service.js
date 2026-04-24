@@ -6,7 +6,7 @@ const ESTADOS_VALIDOS = ['PENDIENTE', 'PAGADO', 'CANCELADO'];
 
 const finanzasService = {};
 
-finanzasService.crear = async ({ tipo, concepto, monto, fecha, estado, metodoPago, diagnosticoRef, pacienteId, citaId, odontogramaId }) => {
+finanzasService.crear = async ({ tipo, concepto, monto, fecha, estado, metodoPago, diagnosticoRef, nota, pacienteId, citaId, odontogramaId }) => {
   if (!tipo || !concepto || monto === undefined || !fecha) {
     throw new AppError('Los campos tipo, concepto, monto y fecha son obligatorios', 400);
   }
@@ -48,6 +48,7 @@ finanzasService.crear = async ({ tipo, concepto, monto, fecha, estado, metodoPag
       estado: estadoFinal,
       metodoPago: metodoPago || null,
       diagnosticoRef: diagnosticoRef || null,
+      nota: nota || null,
       pacienteId: pacienteId ? Number(pacienteId) : null,
       citaId: citaId ? Number(citaId) : null,
       odontogramaId: odontogramaId ? Number(odontogramaId) : null,
