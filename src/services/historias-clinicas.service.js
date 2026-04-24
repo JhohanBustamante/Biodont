@@ -1,4 +1,5 @@
 const prisma = require('../config/prisma');
+const AppError = require('../errors/AppError');
 
 const generateHistoriaNumber = (pacienteId) => {
   const year = new Date().getFullYear();
@@ -13,7 +14,7 @@ const getHistoriaClinicaByPacienteService = async (pacienteId) => {
   });
 
   if (!paciente) {
-    throw new Error('Paciente no encontrado');
+    throw new AppError('Paciente no encontrado', 404);
   }
 
   const historia = await prisma.historiaClinica.findFirst({
@@ -67,7 +68,7 @@ const createOrUpdateHistoriaClinicaService = async (data, user) => {
   } = data;
 
   if (!pacienteId) {
-    throw new Error('El paciente es obligatorio');
+    throw new AppError('El paciente es obligatorio', 400);
   }
 
   const pacienteIdNumber = Number(pacienteId);
@@ -77,7 +78,7 @@ const createOrUpdateHistoriaClinicaService = async (data, user) => {
   });
 
   if (!paciente) {
-    throw new Error('Paciente no encontrado');
+    throw new AppError('Paciente no encontrado', 404);
   }
 
   const historiaExistente = await prisma.historiaClinica.findFirst({
@@ -128,43 +129,25 @@ const createOrUpdateHistoriaClinicaService = async (data, user) => {
     declaracionAceptada: Boolean(declaracionAceptada)
   };
 
-  let historia;
-
-  if (historiaExistente) {
-    historia = await prisma.historiaClinica.update({
-      where: { id: historiaExistente.id },
-      data: payload,
-      include: {
-        odontograma: {
-          include: {
-            dientes: {
-              include: {
-                superficies: true
-              }
+  const historia = await prisma.historiaClinica.upsert({
+    where: { numeroHistoria: historiaNumeroFinal },
+    create: {
+      pacienteId: pacienteIdNumber,
+      ...payload
+    },
+    update: payload,
+    include: {
+      odontograma: {
+        include: {
+          dientes: {
+            include: {
+              superficies: true
             }
           }
         }
       }
-    });
-  } else {
-    historia = await prisma.historiaClinica.create({
-      data: {
-        pacienteId: pacienteIdNumber,
-        ...payload
-      },
-      include: {
-        odontograma: {
-          include: {
-            dientes: {
-              include: {
-                superficies: true
-              }
-            }
-          }
-        }
-      }
-    });
-  }
+    }
+  });
 
   await prisma.paciente.update({
     where: { id: pacienteIdNumber },

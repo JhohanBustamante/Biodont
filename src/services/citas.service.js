@@ -1,4 +1,5 @@
 const prisma = require('../config/prisma');
+const AppError = require('../errors/AppError');
 
 const getStartOfToday = () => {
   const now = new Date();
@@ -42,7 +43,7 @@ const createCitaService = async (data) => {
   } = data;
 
   if (!pacienteId || !fecha || !hora || !motivo) {
-    throw new Error('Paciente, fecha, hora y motivo son obligatorios');
+    throw new AppError('Paciente, fecha, hora y motivo son obligatorios', 400);
   }
 
   const paciente = await prisma.paciente.findUnique({
@@ -50,7 +51,7 @@ const createCitaService = async (data) => {
   });
 
   if (!paciente) {
-    throw new Error('El paciente seleccionado no existe');
+    throw new AppError('El paciente seleccionado no existe', 404);
   }
 
   if (usuarioId) {
@@ -59,7 +60,7 @@ const createCitaService = async (data) => {
     });
 
     if (!usuario) {
-      throw new Error('El profesional seleccionado no existe');
+      throw new AppError('El profesional seleccionado no existe', 404);
     }
   }
 
@@ -109,6 +110,7 @@ const listCitasService = async ({ estado, tipoAtencion, pacienteId, fechaDesde, 
     hora: formatHour(cita.fecha),
     fecha: formatDate(cita.fecha),
     fechaISO: `${cita.fecha.getFullYear()}-${String(cita.fecha.getMonth() + 1).padStart(2, '0')}-${String(cita.fecha.getDate()).padStart(2, '0')}`,
+    pacienteId: cita.pacienteId,
     pacienteNombre: `${cita.paciente.nombre} ${cita.paciente.apellido}`.trim(),
     profesional: cita.usuario
       ? `${cita.usuario.nombre} ${cita.usuario.apellido}`.trim()
@@ -228,7 +230,7 @@ const getAgendaSummaryService = async () => {
 
   const primerTurno = formatHour(citas[0].fecha);
   const ultimoTurno = formatHour(citas[citas.length - 1].fecha);
-  const espaciosDisponibles = Math.max(0, 10 - citas.length);
+  const espaciosDisponibles = Math.max(0, 30 - citas.length);
 
   return {
     primerTurno,
@@ -243,11 +245,11 @@ const ESTADOS_VALIDOS = ['PROGRAMADA', 'CONFIRMADA', 'ATENDIDA', 'CANCELADA'];
 
 const updateCitaEstadoService = async (id, estado) => {
   if (!estado || !ESTADOS_VALIDOS.includes(estado.toUpperCase().trim())) {
-    throw new Error(`Estado inválido. Valores permitidos: ${ESTADOS_VALIDOS.join(', ')}`);
+    throw new AppError(`Estado inválido. Valores permitidos: ${ESTADOS_VALIDOS.join(', ')}`, 400);
   }
 
   const cita = await prisma.cita.findUnique({ where: { id: Number(id) } });
-  if (!cita) throw new Error('Cita no encontrada');
+  if (!cita) throw new AppError('Cita no encontrada', 404);
 
   return await prisma.cita.update({
     where: { id: Number(id) },

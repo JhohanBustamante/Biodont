@@ -1,4 +1,5 @@
 const prisma = require('../config/prisma');
+const AppError = require('../errors/AppError');
 
 const getStartOfMonth = () => {
   const now = new Date();
@@ -28,7 +29,7 @@ const createPacienteService = async (data) => {
   } = data;
 
   if (!nombre || !apellido || !documento) {
-    throw new Error('Nombre, apellido y documento son obligatorios');
+    throw new AppError('Nombre, apellido y documento son obligatorios', 400);
   }
 
   const existingPaciente = await prisma.paciente.findUnique({
@@ -36,7 +37,7 @@ const createPacienteService = async (data) => {
   });
 
   if (existingPaciente) {
-    throw new Error('Ya existe un paciente con ese documento');
+    throw new AppError('Ya existe un paciente con ese documento', 409);
   }
 
   const paciente = await prisma.paciente.create({
@@ -95,7 +96,7 @@ const getPacienteByIdService = async (id) => {
   });
 
   if (!paciente) {
-    throw new Error('Paciente no encontrado');
+    throw new AppError('Paciente no encontrado', 404);
   }
 
   return paciente;
@@ -162,13 +163,13 @@ const getPacientesQuickInfoService = async () => {
 
 const updatePacienteService = async (id, data) => {
   const paciente = await prisma.paciente.findUnique({ where: { id: Number(id) } });
-  if (!paciente) throw new Error('Paciente no encontrado');
+  if (!paciente) throw new AppError('Paciente no encontrado', 404);
 
   const { nombre, apellido, documento, telefono, correo, fechaNacimiento, direccion, eps, alergias, observaciones } = data;
 
   if (documento && documento.trim() !== paciente.documento) {
     const existing = await prisma.paciente.findUnique({ where: { documento: documento.trim() } });
-    if (existing) throw new Error('Ya existe un paciente con ese documento');
+    if (existing) throw new AppError('Ya existe un paciente con ese documento', 409);
   }
 
   return await prisma.paciente.update({

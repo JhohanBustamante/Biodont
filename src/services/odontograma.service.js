@@ -1,4 +1,5 @@
 const prisma = require("../config/prisma");
+const AppError = require("../errors/AppError");
 const odontogramaService = {};
 
 odontogramaService.verTodos = async (queries) => {
@@ -31,7 +32,7 @@ odontogramaService.crear = async (body) => {
   const { pacienteId, fecha, dientes, tipo } = body;
 
   if (!pacienteId) {
-    throw new Error("El paciente es obligatorio");
+    throw new AppError("El paciente es obligatorio", 400);
   }
 
   const pacienteIdNumber = Number(pacienteId);
@@ -41,7 +42,7 @@ odontogramaService.crear = async (body) => {
   });
 
   if (!paciente) {
-    throw new Error("Paciente no encontrado");
+    throw new AppError("Paciente no encontrado", 404);
   }
 
   const odontogramaActivo = await prisma.odontograma.findFirst({
@@ -55,7 +56,7 @@ odontogramaService.crear = async (body) => {
   });
 
   if (odontogramaActivo) {
-    throw new Error("El paciente ya tiene un odontograma activo. Debe versionarse.");
+    throw new AppError("El paciente ya tiene un odontograma activo. Debe versionarse.", 409);
   }
 
   return await prisma.odontograma.create({
@@ -65,7 +66,7 @@ odontogramaService.crear = async (body) => {
       },
       version: 1,
       activo: true,
-      tipo: tipo === 'PEDIATRICO' ? 'PEDIATRICO' : 'ADULTO',
+      tipo: tipo === 'PEDIATRICO' ? 'PEDIATRICO' : tipo === 'MIXTO' ? 'MIXTO' : 'ADULTO',
       fecha: fecha ? new Date(fecha) : new Date(),
       dientes: {
         create: (dientes || []).map((diente) => ({
@@ -93,7 +94,7 @@ odontogramaService.versionar = async (id, body) => {
   const { pacienteId, dientes, tipo } = body;
 
   if (!pacienteId) {
-    throw new Error("El paciente es obligatorio");
+    throw new AppError("El paciente es obligatorio", 400);
   }
 
   return await prisma.$transaction(async (tx) => {
@@ -102,11 +103,11 @@ odontogramaService.versionar = async (id, body) => {
     });
 
     if (!actual) {
-      throw new Error("Odontograma no encontrado");
+      throw new AppError("Odontograma no encontrado", 404);
     }
 
     if (actual.pacienteId !== Number(pacienteId)) {
-      throw new Error("El odontograma no pertenece al paciente enviado");
+      throw new AppError("El odontograma no pertenece al paciente enviado", 403);
     }
 
     await tx.odontograma.update({
@@ -121,7 +122,7 @@ odontogramaService.versionar = async (id, body) => {
         },
         version: actual.version + 1,
         activo: true,
-        tipo: tipo === 'PEDIATRICO' ? 'PEDIATRICO' : (actual.tipo ?? 'ADULTO'),
+        tipo: tipo === 'PEDIATRICO' ? 'PEDIATRICO' : tipo === 'MIXTO' ? 'MIXTO' : (actual.tipo ?? 'ADULTO'),
         fecha: new Date(),
         dientes: {
           create: (dientes || []).map((diente) => ({

@@ -9,11 +9,14 @@ const authRoutes = require('./routes/auth.routes.js');
 const dashboardRoutes = require('./routes/dashboard.routes');
 const historiasClinicasRoutes = require('./routes/historias-clinicas.routes');
 const tratamientosRoutes = require('./routes/tratamientos.routes');
+const documentosRoutes = require('./routes/documentos.routes');
 
 const cors = require('cors');
 const morgan = require('morgan');
+const helmet = require('helmet');
 const app = express();
 
+app.use(helmet());
 app.use(morgan('dev'));
 app.use(cors());
 app.use(express.json());
@@ -26,6 +29,7 @@ app.use('/finanzas', finanzasRoutes)
 app.use('/odontograma', odontogramaRoutes)
 app.use('/historias-clinicas', historiasClinicasRoutes)
 app.use('/tratamientos', tratamientosRoutes)
+app.use('/documentos', documentosRoutes)
 
 
 app.get('/api/v1/health', async (req, res) => {

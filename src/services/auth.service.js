@@ -64,7 +64,7 @@ const registerUserService = async (data) => {
 
 const loginUserService = async (correo, password) => {
   if (!correo || !password) {
-    throw new Error("Correo y contraseña son obligatorios");
+    throw new AppError("Correo y contraseña son obligatorios", 400);
   }
 
   const user = await prisma.usuario.findUnique({
@@ -72,17 +72,17 @@ const loginUserService = async (correo, password) => {
   });
 
   if (!user) {
-    throw new Error("Credenciales inválidas");
+    throw new AppError("Credenciales inválidas", 401);
   }
 
   if (!user.activo) {
-    throw new Error("Usuario inactivo. Contacta al administrador");
+    throw new AppError("Usuario inactivo. Contacta al administrador", 403);
   }
 
   const isPasswordValid = await bcrypt.compare(password, user.password);
 
   if (!isPasswordValid) {
-    throw new Error("Credenciales inválidas");
+    throw new AppError("Credenciales inválidas", 401);
   }
 
   const token = generateToken(user);
@@ -120,7 +120,7 @@ const getProfileService = async (userId) => {
   });
 
   if (!user) {
-    throw new Error("Usuario no encontrado");
+    throw new AppError("Usuario no encontrado", 404);
   }
 
   return user;
@@ -149,7 +149,7 @@ const updateUserRoleService = async (userId, nuevoRol) => {
   const rolesPermitidosCambio = ["ADMIN", "ODONTOLOGO", "AUXILIAR", "RECEPCION"];
 
   if (!rolesPermitidosCambio.includes(nuevoRol)) {
-    throw new Error("Rol inválido");
+    throw new AppError("Rol inválido", 400);
   }
 
   const user = await prisma.usuario.findUnique({
@@ -157,7 +157,7 @@ const updateUserRoleService = async (userId, nuevoRol) => {
   });
 
   if (!user) {
-    throw new Error("Usuario no encontrado");
+    throw new AppError("Usuario no encontrado", 404);
   }
 
   return await prisma.usuario.update({
@@ -181,7 +181,7 @@ const updateUserStatusService = async (userId, activo) => {
   });
 
   if (!user) {
-    throw new Error("Usuario no encontrado");
+    throw new AppError("Usuario no encontrado", 404);
   }
 
   return await prisma.usuario.update({

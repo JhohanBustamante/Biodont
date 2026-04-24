@@ -42,6 +42,14 @@ enum EstadoMovimiento {
   CANCELADO
 }
 
+enum DocumentoTipo {
+  RADIOGRAFIA
+  CONSENTIMIENTO
+  EXAMEN
+  RECETA
+  OTRO
+}
+
 //////////////////////////////////////////////////////
 // PACIENTES
 //////////////////////////////////////////////////////
@@ -68,6 +76,7 @@ model Paciente {
   odontogramas            Odontograma[]
   movimientos             Movimiento[]
   historiasClinicas       HistoriaClinica[]
+  documentos              Documento[]
 
   @@index([documento])
 }
@@ -92,6 +101,7 @@ model Usuario {
   citas             Cita[]
   tratamientos      Tratamiento[]
   historiasClinicas HistoriaClinica[]
+  documentos        Documento[]
 
   @@index([correo])
 }
@@ -280,4 +290,30 @@ model DiagnosticoSuperficie {
   diente      Diente  @relation(fields: [dienteId], references: [id])
 
   @@index([dienteId])
+}
+
+//////////////////////////////////////////////////////
+// DOCUMENTOS
+//////////////////////////////////////////////////////
+
+model Documento {
+  id              Int           @id @default(autoincrement())
+  pacienteId      Int
+  usuarioId       Int?
+
+  nombre          String
+  nombreArchivo   String        @unique
+  tipo            DocumentoTipo
+  fecha           DateTime?
+  ruta            String
+  mimetype        String
+  tamanio         Int
+
+  createdAt       DateTime      @default(now())
+
+  paciente        Paciente      @relation(fields: [pacienteId], references: [id])
+  usuario         Usuario?      @relation(fields: [usuarioId], references: [id])
+
+  @@index([pacienteId])
+  @@index([usuarioId])
 }
