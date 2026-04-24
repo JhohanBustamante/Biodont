@@ -38,10 +38,15 @@ const listDocumentosByPacienteService = async (pacienteId) => {
   });
 };
 
+const TIPOS_VALIDOS = ['RADIOGRAFIA', 'CONSENTIMIENTO', 'EXAMEN', 'RECETA', 'OTRO'];
+
 const createDocumentoService = async ({ pacienteId, tipo, fecha, file, user }) => {
   if (!file) throw new AppError('Archivo requerido', 400);
   if (!pacienteId) throw new AppError('Paciente requerido', 400);
   if (!tipo) throw new AppError('Tipo de documento requerido', 400);
+  if (!TIPOS_VALIDOS.includes(tipo)) {
+    throw new AppError(`Tipo inválido. Valores permitidos: ${TIPOS_VALIDOS.join(', ')}`, 400);
+  }
 
   const paciente = await prisma.paciente.findUnique({
     where: { id: Number(pacienteId) },

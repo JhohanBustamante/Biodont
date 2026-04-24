@@ -6,7 +6,10 @@ odontogramaController.verTodos = async (req, res) => {
     const odontogramas = await odontogramaService.verTodos(req.query);
     res.json(odontogramas);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(error.statusCode || 500).json({
+      ok: false,
+      message: error.statusCode ? error.message : 'Error interno del servidor',
+    });
   }
 };
 
@@ -15,7 +18,10 @@ odontogramaController.crear = async (req, res) => {
     const odontograma = await odontogramaService.crear(req.body);
     res.status(201).json(odontograma);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(error.statusCode || 500).json({
+      ok: false,
+      message: error.statusCode ? error.message : 'Error interno del servidor',
+    });
   }
 };
 
@@ -25,18 +31,23 @@ odontogramaController.versionar = async (req, res) => {
     const result = await odontogramaService.versionar(id, req.body);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(error.statusCode || 500).json({
+      ok: false,
+      message: error.statusCode ? error.message : 'Error interno del servidor',
+    });
   }
 };
 
 odontogramaController.verPorUsuario = async (req, res) => {
   try {
     const pacienteId = Number(req.params.pacienteId);
-
     const result = await odontogramaService.verPorUsuario(pacienteId);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(error.statusCode || 500).json({
+      ok: false,
+      message: error.statusCode ? error.message : 'Error interno del servidor',
+    });
   }
 };
 
@@ -46,7 +57,10 @@ odontogramaController.verHistorial = async (req, res) => {
     const result = await odontogramaService.verHistorial(pacienteId);
     res.json(result);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(error.statusCode || 500).json({
+      ok: false,
+      message: error.statusCode ? error.message : 'Error interno del servidor',
+    });
   }
 };
 

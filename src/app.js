@@ -41,4 +41,12 @@ app.get('/api/v1/health', async (req, res) => {
   }
 });
 
+// Global error handler — debe ser el último middleware
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+  const status = err.statusCode || 500;
+  const message = err.statusCode ? err.message : 'Error interno del servidor';
+  res.status(status).json({ ok: false, message });
+});
+
 module.exports = app;
