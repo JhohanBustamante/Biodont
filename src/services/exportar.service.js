@@ -34,7 +34,7 @@ const exportarMovimientos = async ({ fechaDesde, fechaHasta, estado } = {}) => {
   if (fechaDesde || fechaHasta) {
     where.fecha = {};
     if (fechaDesde) where.fecha.gte = new Date(fechaDesde);
-    if (fechaHasta) where.fecha.lte = new Date(`${fechaHasta}T23:59:59`);
+    if (fechaHasta) where.fecha.lte = new Date(`${fechaHasta}T23:59:59.999`);
   }
   if (estado) where.estado = estado.toUpperCase();
 
@@ -69,7 +69,7 @@ const exportarCitas = async ({ fechaDesde, fechaHasta, estado } = {}) => {
   if (fechaDesde || fechaHasta) {
     where.fecha = {};
     if (fechaDesde) where.fecha.gte = new Date(fechaDesde);
-    if (fechaHasta) where.fecha.lte = new Date(`${fechaHasta}T23:59:59`);
+    if (fechaHasta) where.fecha.lte = new Date(`${fechaHasta}T23:59:59.999`);
   }
   if (estado) where.estado = estado.toUpperCase();
 
@@ -83,7 +83,7 @@ const exportarCitas = async ({ fechaDesde, fechaHasta, estado } = {}) => {
 
   return registros.map((c) => ({
     fecha:              c.fecha.toISOString().substring(0, 10),
-    hora:               c.fecha.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', hour12: false }),
+    hora:               c.fecha.toISOString().substring(11, 16),
     motivo:             c.motivo,
     tipoAtencion:       c.tipoAtencion ?? '',
     estado:             c.estado,
