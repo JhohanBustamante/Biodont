@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const prisma = require('./config/prisma');
 
 const pacientesRoutes = require('./routes/pacientes.routes');
@@ -19,8 +20,8 @@ const helmet = require('helmet');
 const app = express();
 
 app.use(helmet());
-app.use(morgan('dev'));
-app.use(cors());
+app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+app.use(cors({ origin: process.env.ALLOWED_ORIGIN || '*' }));
 app.use(express.json());
 
 app.use('/auth', authRoutes)
@@ -44,6 +45,15 @@ app.get('/api/v1/health', async (req, res) => {
     res.status(500).json({ status: 'error', db: 'disconnected' });
   }
 });
+
+// Frontend estático — solo en producción
+if (process.env.NODE_ENV === 'production') {
+  const frontendPath = path.join(__dirname, '../public');
+  app.use(express.static(frontendPath));
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(frontendPath, 'index.html'));
+  });
+}
 
 // Global error handler — debe ser el último middleware
 // eslint-disable-next-line no-unused-vars
