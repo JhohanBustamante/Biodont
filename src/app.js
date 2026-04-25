@@ -10,6 +10,7 @@ const dashboardRoutes = require('./routes/dashboard.routes');
 const historiasClinicasRoutes = require('./routes/historias-clinicas.routes');
 const tratamientosRoutes = require('./routes/tratamientos.routes');
 const documentosRoutes = require('./routes/documentos.routes');
+const adminRoutes = require('./routes/admin.routes');
 const exportarRoutes = require('./routes/exportar.routes');
 
 const cors = require('cors');
@@ -31,6 +32,7 @@ app.use('/odontograma', odontogramaRoutes)
 app.use('/historias-clinicas', historiasClinicasRoutes)
 app.use('/tratamientos', tratamientosRoutes)
 app.use('/documentos', documentosRoutes)
+app.use('/admin', adminRoutes)
 app.use('/admin/exportar', exportarRoutes)
 
 
