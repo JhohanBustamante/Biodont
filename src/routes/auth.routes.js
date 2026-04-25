@@ -8,6 +8,7 @@ const {
   listUsers,
   updateUserRole,
   updateUserStatus,
+  changeUserPassword,
   getClinicalStaff
 } = require('../controllers/auth.controller');
 
@@ -25,6 +26,7 @@ router.get('/me', authMiddleware, getProfile);
 router.get('/users', authMiddleware, roleMiddleware('ADMIN'), listUsers);
 router.patch('/users/:id/role', authMiddleware, roleMiddleware('ADMIN'), updateUserRole);
 router.patch('/users/:id/status', authMiddleware, roleMiddleware('ADMIN'), updateUserStatus);
+router.patch('/users/:id/password', authMiddleware, roleMiddleware('ADMIN'), changeUserPassword);
 router.get('/clinical-staff', authMiddleware, getClinicalStaff);
 
 module.exports = router;

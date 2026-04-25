@@ -5,6 +5,7 @@ const {
   listUsersService,
   updateUserRoleService,
   updateUserStatusService,
+  changeUserPasswordService,
   getClinicalStaffService
 } = require('../services/auth.service');
 
@@ -134,6 +135,20 @@ const updateUserStatus = async (req, res) => {
   }
 };
 
+const changeUserPassword = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { password } = req.body;
+    const user = await changeUserPasswordService(id, password);
+    return res.status(200).json({ ok: true, message: 'Contraseña actualizada correctamente', data: user });
+  } catch (error) {
+    return res.status(error.statusCode || 500).json({
+      ok: false,
+      message: error.statusCode ? error.message : 'Error al actualizar la contraseña',
+    });
+  }
+};
+
 module.exports = {
   getClinicalStaff,
   registerUser,
@@ -142,4 +157,5 @@ module.exports = {
   listUsers,
   updateUserRole,
   updateUserStatus,
+  changeUserPassword,
 };

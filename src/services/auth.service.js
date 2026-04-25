@@ -199,6 +199,22 @@ const updateUserStatusService = async (userId, activo) => {
   });
 };
 
+const changeUserPasswordService = async (userId, newPassword) => {
+  if (!newPassword || newPassword.length < 8) {
+    throw new AppError('La contraseña debe tener al menos 8 caracteres', 400);
+  }
+
+  const user = await prisma.usuario.findUnique({ where: { id: Number(userId) } });
+  if (!user) throw new AppError('Usuario no encontrado', 404);
+
+  const hashed = await bcrypt.hash(newPassword, 10);
+  return await prisma.usuario.update({
+    where: { id: Number(userId) },
+    data: { password: hashed },
+    select: { id: true, nombre: true, apellido: true, correo: true },
+  });
+};
+
 const getClinicalStaffService = async () => {
   const users = await prisma.usuario.findMany({
     where: {
@@ -230,5 +246,6 @@ module.exports = {
   listUsersService,
   updateUserRoleService,
   updateUserStatusService,
+  changeUserPasswordService,
   getClinicalStaffService,
 };
