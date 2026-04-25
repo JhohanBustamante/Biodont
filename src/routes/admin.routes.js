@@ -16,7 +16,9 @@ const restoreUpload = multer({
     if (file.originalname.toLowerCase().endsWith('.db')) {
       cb(null, true);
     } else {
-      cb(new Error('Solo se aceptan archivos .db'));
+      const err = new Error('Solo se aceptan archivos .db');
+      err.statusCode = 400;
+      cb(err);
     }
   },
 });
