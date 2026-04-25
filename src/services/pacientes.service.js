@@ -190,6 +190,18 @@ const updatePacienteService = async (id, data) => {
 };
 
 /**
+ * Parsea el campo "activo" del archivo importado.
+ * Acepta: SI, SÍ, YES, TRUE, 1  → true
+ *         NO, FALSE, 0 y vacío  → false
+ * Si el campo no viene en la fila devuelve undefined (Prisma no lo toca).
+ */
+const parseActivo = (val) => {
+  const raw = String(val ?? '').trim();
+  if (raw === '') return undefined;
+  return /^(si|sí|yes|true|1)$/i.test(raw);
+};
+
+/**
  * Importación masiva de pacientes desde un array de filas ya parseadas.
  * Hace upsert por documento: crea si no existe, actualiza si ya existe.
  * Devuelve { importados, actualizados, errores }.
@@ -212,6 +224,8 @@ const importarPacientesService = async (rows) => {
     }
 
     const documento = String(row.documento).trim();
+    const activoValue = parseActivo(row.activo);
+
     const data = {
       nombre:          String(row.nombre).trim(),
       apellido:        String(row.apellido).trim(),
@@ -223,6 +237,7 @@ const importarPacientesService = async (rows) => {
       eps:             row.eps        ? String(row.eps).trim()        : null,
       alergias:        row.alergias   ? String(row.alergias).trim()   : null,
       observaciones:   row.observaciones ? String(row.observaciones).trim() : null,
+      ...(activoValue !== undefined && { activo: activoValue }),
     };
 
     // Saltar si fechaNacimiento resultó inválida
