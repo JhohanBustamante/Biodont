@@ -189,11 +189,70 @@ const updatePacienteService = async (id, data) => {
   });
 };
 
+/**
+ * Importación masiva de pacientes desde un array de filas ya parseadas.
+ * Hace upsert por documento: crea si no existe, actualiza si ya existe.
+ * Devuelve { importados, actualizados, errores }.
+ */
+const importarPacientesService = async (rows) => {
+  const REQUIRED = ['nombre', 'apellido', 'documento'];
+  let importados = 0;
+  let actualizados = 0;
+  const errores = [];
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const fila = i + 2; // fila 1 = encabezado, filas de datos desde 2
+
+    // Validar campos requeridos
+    const missing = REQUIRED.filter(f => !row[f] || String(row[f]).trim() === '');
+    if (missing.length > 0) {
+      errores.push({ fila, documento: row.documento || '—', motivo: `Campos requeridos faltantes: ${missing.join(', ')}` });
+      continue;
+    }
+
+    const documento = String(row.documento).trim();
+    const data = {
+      nombre:          String(row.nombre).trim(),
+      apellido:        String(row.apellido).trim(),
+      documento,
+      telefono:        row.telefono   ? String(row.telefono).trim()   : null,
+      correo:          row.correo     ? String(row.correo).trim().toLowerCase() : null,
+      fechaNacimiento: row.fechaNacimiento ? new Date(row.fechaNacimiento) : null,
+      direccion:       row.direccion  ? String(row.direccion).trim()  : null,
+      eps:             row.eps        ? String(row.eps).trim()        : null,
+      alergias:        row.alergias   ? String(row.alergias).trim()   : null,
+      observaciones:   row.observaciones ? String(row.observaciones).trim() : null,
+    };
+
+    // Saltar si fechaNacimiento resultó inválida
+    if (data.fechaNacimiento && isNaN(data.fechaNacimiento.getTime())) {
+      data.fechaNacimiento = null;
+    }
+
+    try {
+      const existing = await prisma.paciente.findUnique({ where: { documento } });
+      if (existing) {
+        await prisma.paciente.update({ where: { documento }, data });
+        actualizados++;
+      } else {
+        await prisma.paciente.create({ data });
+        importados++;
+      }
+    } catch (err) {
+      errores.push({ fila, documento, motivo: err.message || 'Error desconocido' });
+    }
+  }
+
+  return { importados, actualizados, errores };
+};
+
 module.exports = {
   createPacienteService,
   listPacientesService,
   getPacienteByIdService,
   getRecentPacientesService,
   getPacientesQuickInfoService,
-  updatePacienteService
+  updatePacienteService,
+  importarPacientesService,
 };

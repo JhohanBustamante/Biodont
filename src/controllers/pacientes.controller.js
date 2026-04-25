@@ -4,7 +4,8 @@ const {
   getPacienteByIdService,
   getRecentPacientesService,
   getPacientesQuickInfoService,
-  updatePacienteService
+  updatePacienteService,
+  importarPacientesService,
 } = require('../services/pacientes.service');
 
 const createPaciente = async (req, res) => {
@@ -102,11 +103,31 @@ const updatePaciente = async (req, res) => {
   }
 };
 
+const importarPacientes = async (req, res) => {
+  try {
+    const { rows } = req.body;
+    if (!Array.isArray(rows) || rows.length === 0) {
+      return res.status(400).json({ ok: false, message: 'Se requiere un array de filas no vacío' });
+    }
+    if (rows.length > 1000) {
+      return res.status(400).json({ ok: false, message: 'El archivo no puede superar 1000 filas por importación' });
+    }
+    const resultado = await importarPacientesService(rows);
+    return res.status(200).json({ ok: true, data: resultado });
+  } catch (error) {
+    return res.status(error.statusCode || 500).json({
+      ok: false,
+      message: error.statusCode ? error.message : 'Error al procesar la importación',
+    });
+  }
+};
+
 module.exports = {
   createPaciente,
   listPacientes,
   getPacienteById,
   getRecentPacientes,
   getPacientesQuickInfo,
-  updatePaciente
+  updatePaciente,
+  importarPacientes,
 };
