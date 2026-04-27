@@ -7,7 +7,16 @@ const prisma = require('../config/prisma');
 const { authMiddleware } = require('../middlewares/auth.middleware');
 const { roleMiddleware } = require('../middlewares/role.middleware');
 
-const DB_PATH = path.resolve(__dirname, '../../prisma/dev.db');
+// Derivar la ruta real del archivo SQLite desde DATABASE_URL
+// Soporta rutas absolutas (file:/ruta/absoluta) y relativas (file:./dev.db)
+function resolveDbPath() {
+  const url = process.env.DATABASE_URL || '';
+  const filePart = url.startsWith('file:') ? url.slice(5) : url;
+  if (!filePart) return path.resolve(__dirname, '../../prisma/dev.db');
+  if (path.isAbsolute(filePart)) return filePart;
+  return path.resolve(process.cwd(), filePart);
+}
+const DB_PATH = resolveDbPath();
 
 const restoreUpload = multer({
   storage: multer.memoryStorage(),
@@ -27,10 +36,14 @@ const restoreUpload = multer({
  * GET /admin/backup
  * Descarga el archivo SQLite como copia de seguridad (solo ADMIN).
  */
-router.get('/backup', authMiddleware, roleMiddleware('ADMIN'), (req, res) => {
+router.get('/backup', authMiddleware, roleMiddleware('ADMIN'), async (req, res) => {
   if (!fs.existsSync(DB_PATH)) {
     return res.status(404).json({ ok: false, message: 'Archivo de base de datos no encontrado' });
   }
+  try {
+    // Forzar checkpoint del WAL para que el archivo .db refleje el estado completo
+    await prisma.$executeRawUnsafe('PRAGMA wal_checkpoint(FULL);');
+  } catch (_) { /* continuar aunque falle el checkpoint */ }
   const fecha = new Date().toISOString().substring(0, 10);
   res.setHeader('Content-Disposition', `attachment; filename="biodont_backup_${fecha}.db"`);
   res.setHeader('Content-Type', 'application/octet-stream');
@@ -68,6 +81,10 @@ router.post(
         const f = DB_PATH + ext;
         if (fs.existsSync(f)) fs.unlinkSync(f);
       }
+
+      // Reconectar explícitamente y verificar que la BD restaurada responde
+      await prisma.$connect();
+      await prisma.$queryRaw`SELECT 1`;
 
       return res.json({ ok: true, message: 'Base de datos restaurada correctamente' });
     } catch (err) {
