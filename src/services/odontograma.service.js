@@ -122,7 +122,7 @@ odontogramaService.versionar = async (id, body) => {
         },
         version: actual.version + 1,
         activo: true,
-        tipo: tipo === 'PEDIATRICO' ? 'PEDIATRICO' : tipo === 'MIXTO' ? 'MIXTO' : (actual.tipo ?? 'ADULTO'),
+        tipo: tipo === 'PEDIATRICO' ? 'PEDIATRICO' : tipo === 'MIXTO' ? 'MIXTO' : 'ADULTO',
         fecha: new Date(),
         dientes: {
           create: (dientes || []).map((diente) => ({
