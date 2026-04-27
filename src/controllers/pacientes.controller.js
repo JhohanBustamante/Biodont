@@ -6,6 +6,7 @@ const {
   getPacientesQuickInfoService,
   updatePacienteService,
   importarPacientesService,
+  toggleActivoPacienteService,
 } = require('../services/pacientes.service');
 
 const createPaciente = async (req, res) => {
@@ -122,6 +123,26 @@ const importarPacientes = async (req, res) => {
   }
 };
 
+const toggleActivoPaciente = async (req, res) => {
+  try {
+    const { activo, force = false } = req.body;
+    if (typeof activo !== 'boolean') {
+      return res.status(400).json({ ok: false, message: 'El campo activo debe ser booleano' });
+    }
+    const paciente = await toggleActivoPacienteService(req.params.id, activo, force);
+    const message = activo ? 'Paciente activado correctamente' : 'Paciente desactivado correctamente';
+    return res.json({ ok: true, message, data: paciente });
+  } catch (err) {
+    if (err.needsConfirmation) {
+      return res.status(409).json({ ok: false, message: err.message, pendientes: err.pendientes });
+    }
+    return res.status(err.statusCode || 500).json({
+      ok: false,
+      message: err.statusCode ? err.message : 'Error al cambiar estado del paciente',
+    });
+  }
+};
+
 module.exports = {
   createPaciente,
   listPacientes,
@@ -130,4 +151,5 @@ module.exports = {
   getPacientesQuickInfo,
   updatePaciente,
   importarPacientes,
+  toggleActivoPaciente,
 };

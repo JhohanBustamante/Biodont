@@ -262,6 +262,30 @@ const importarPacientesService = async (rows) => {
   return { importados, actualizados, errores };
 };
 
+const toggleActivoPacienteService = async (id, activo, force) => {
+  const paciente = await prisma.paciente.findUnique({ where: { id: Number(id) } });
+  if (!paciente) throw new AppError('Paciente no encontrado', 404);
+
+  if (!activo && !force) {
+    const [movimientosPendientes, odontogramasActivos] = await Promise.all([
+      prisma.movimiento.count({ where: { pacienteId: Number(id), estado: 'PENDIENTE' } }),
+      prisma.odontograma.count({ where: { pacienteId: Number(id), activo: true } }),
+    ]);
+
+    if (movimientosPendientes > 0 || odontogramasActivos > 0) {
+      const err = new AppError('El paciente tiene items pendientes', 409);
+      err.needsConfirmation = true;
+      err.pendientes = { movimientosPendientes, odontogramasActivos };
+      throw err;
+    }
+  }
+
+  return await prisma.paciente.update({
+    where: { id: Number(id) },
+    data: { activo },
+  });
+};
+
 module.exports = {
   createPacienteService,
   listPacientesService,
@@ -270,4 +294,5 @@ module.exports = {
   getPacientesQuickInfoService,
   updatePacienteService,
   importarPacientesService,
+  toggleActivoPacienteService,
 };
