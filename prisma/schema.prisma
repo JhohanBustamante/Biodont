@@ -231,12 +231,30 @@ model Movimiento {
   paciente        Paciente?         @relation(fields: [pacienteId], references: [id])
   cita            Cita?             @relation(fields: [citaId], references: [id])
   odontograma     Odontograma?      @relation(fields: [odontogramaId], references: [id])
+  pagos           PagoMovimiento[]
 
   @@index([pacienteId])
   @@index([citaId])
   @@index([odontogramaId])
   @@index([fecha])
   @@index([estado])
+}
+
+//////////////////////////////////////////////////////
+// PAGOS DE MOVIMIENTO
+//////////////////////////////////////////////////////
+
+model PagoMovimiento {
+  id           Int        @id @default(autoincrement())
+  movimientoId Int
+  monto        Float
+  fecha        DateTime
+  metodoPago   String?
+  createdAt    DateTime   @default(now())
+
+  movimiento   Movimiento @relation(fields: [movimientoId], references: [id], onDelete: Cascade)
+
+  @@index([movimientoId])
 }
 
 //////////////////////////////////////////////////////

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const finanzasController = require('../controllers/finanzas.controller');
+const pagoMovimientoController = require('../controllers/pagoMovimiento.controller');
 const { authMiddleware } = require('../middlewares/auth.middleware');
 
 router.use(authMiddleware);
@@ -12,5 +13,10 @@ router.post('/', finanzasController.crear);
 router.put('/:id', finanzasController.actualizar);
 router.patch('/:id/estado', finanzasController.actualizarEstado);
 router.delete('/:id', finanzasController.eliminar);
+
+// Pagos parciales de un movimiento
+router.get('/:id/pagos', pagoMovimientoController.verPorMovimiento);
+router.post('/:id/pagos', pagoMovimientoController.crear);
+router.delete('/:id/pagos/:pagoId', pagoMovimientoController.eliminar);
 
 module.exports = router;

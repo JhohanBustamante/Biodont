@@ -81,6 +81,7 @@ finanzasService.verTodos = async ({ tipo, estado, pacienteId, sinPaciente, citaI
     where,
     orderBy: { fecha: 'desc' },
     include: {
+      pagos: { orderBy: { fecha: 'asc' } },
       paciente: { select: { id: true, nombre: true, apellido: true } },
       cita: { select: { id: true, fecha: true, motivo: true } },
       odontograma: { select: { id: true, version: true } },
@@ -92,6 +93,7 @@ finanzasService.verPorId = async (id) => {
   const movimiento = await prisma.movimiento.findUnique({
     where: { id: Number(id) },
     include: {
+      pagos: { orderBy: { fecha: 'asc' } },
       paciente: { select: { id: true, nombre: true, apellido: true } },
       cita: { select: { id: true, fecha: true, motivo: true } },
       odontograma: { select: { id: true, version: true } },
