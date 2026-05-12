@@ -54,6 +54,7 @@ finanzasService.crear = async ({ tipo, concepto, monto, fecha, estado, metodoPag
       odontogramaId: odontogramaId ? Number(odontogramaId) : null,
     },
     include: {
+      pagos: { orderBy: { fecha: 'asc' } },
       paciente: { select: { id: true, nombre: true, apellido: true } },
       cita: { select: { id: true, fecha: true, motivo: true } },
       odontograma: { select: { id: true, version: true } },
@@ -132,6 +133,7 @@ finanzasService.actualizar = async (id, { tipo, concepto, monto, fecha, estado, 
       ...(metodoPago !== undefined && { metodoPago: metodoPago || null }),
     },
     include: {
+      pagos: { orderBy: { fecha: 'asc' } },
       paciente: { select: { id: true, nombre: true, apellido: true } },
       cita: { select: { id: true, fecha: true, motivo: true } },
       odontograma: { select: { id: true, version: true } },
@@ -161,6 +163,7 @@ finanzasService.verPorOdontograma = async (odontogramaId) => {
     where: { odontogramaId: Number(odontogramaId) },
     orderBy: { fecha: 'desc' },
     include: {
+      pagos: { orderBy: { fecha: 'asc' } },
       paciente: { select: { id: true, nombre: true, apellido: true } },
     },
   });
